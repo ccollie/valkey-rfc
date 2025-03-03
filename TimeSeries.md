@@ -154,7 +154,7 @@ is mapped to the id of each series which contains that attribute. The mapping is
 where each node is a 64bit [Roaring BitMap](https://roaringbitmap.org/about/).
 
 The ART allows for efficient lookups and insertions, while the Roaring BitMap performs fast set operations on the series ids.
-In addition, the ART supports path compression for and additional memory savings based on our indexing scheme (see below).
+In addition, the ART supports path compression for additional memory savings based on our indexing scheme (see below).
 
 ### TimeSeries Indexing Scheme
 The ART is used to index time series based on their labels. For each unique combination of label and value, we create a key by concatenating 
