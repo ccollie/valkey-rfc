@@ -145,7 +145,7 @@ it occurs in.
 The time series object also contains metadata like the retention policy, compaction policy, etc.
 
 ### TimeSeries Value Encoding
-TimeSeries Chunks have configurable sample encoding strategies, defaulting to Gorilla XOR compression
+TimeSeries Chunks have configurable sample encoding strategies, defaulting to Gorilla XOR compression.
 Chunks can also be configured to store values as Uncompressed, but this is provided only for compatibility with RedisTimeseries.
 
 ### TimeSeries Indexing
@@ -158,7 +158,7 @@ In addition, the ART supports path compression for and additional memory savings
 
 ### TimeSeries Indexing Scheme
 The ART is used to index time series based on their labels. For each unique combination of label and value, we create a key by concatenating 
-the label and value strings. e.g. "region=us-west". This key is used to manage a 64bit roaring bitmap that contains the ids of all time series 
+the label and value strings. e.g. "region=us-west-2". This key is used to manage a 64bit roaring bitmap that contains the ids of all time series 
 that have that label-value pair. To retrieve ids for a given list of label-value pair, we look up the keys in the ART and perform an intersection.
 We also maintain a mapping from id to valkey key to retrieve the time series after querying.
 
