@@ -13,24 +13,21 @@ The proposed feature is ValkeyTimeSeries which is a Rust based Module that bring
 Support for a time series data type in Valkey is essential for developers who need to store and query time series data. 
 Redis Ltd.‘s TimeSeries module is published under a proprietary license, hence cannot be distributed freely with ValKey.
 
-We propose a Rust based implementation to allows for better memory management, performance and safety.
+We propose a [Rust](https://www.rust-lang.org/) based implementation to allows for better memory management, performance and safety.
 
 ## Design Considerations
 
 The ValkeyTimeSeries module brings a time series module data type to Valkey and provides commands to create 
 time series, operate on them (add sample, query, perform aggregations, compactions, downsampling and joins, etc).
 It allows customization of properties of each series (compression, retention, compactions, etc) through commands and 
-configurations. It also allows users to back up & restore time series 
-(through RDB load and save).
+configurations. 
 
--- todo: discuss use of threads for parallelism and background tasks (series and index compaction, index maintenance, etc)
--- efficient memory management (interning for labels, ART, which allows for prefix compression, Roaring Bitmaps to store series ids)
--- efficient filtering and indexing
+We aim to be efficient both in memory usage and performance. This is achieved through:
+* use of parallelism and background tasks where appropriate (series compactions, index maintenance, etc)
+* efficient memory management (interning for labels, index prefix compression, Roaring Bitmaps for series ids)
+* efficient filtering and indexing
 
-When a user adds a sample (e.g. TS.ADD) to the series, the item is either appended to the last chunk, or upserted into a prior chunk 
-(out-of-order inserts are allowed). 
-
-We have the following terminologies / properties:
+We have the following terminologies:
 * TimeSeries Object: The top level structure representing the data type. It contains meta data and a list of lower-level
                 chunks containing the actual sample data.
 * Sample: A tuple of timestamp and value.
@@ -41,7 +38,8 @@ We have the following terminologies / properties:
 * Filtering: support filtering using Prometheus style selectors
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
 * Rounding: support for rounding sample values to a specified precision. This is enforced for all samples in a time series.
-* Developer Ergonomics: support for relative timestamps in queries, e.g. `TS.RANGE key -6hrs -3hrs` , unit suffixes (e.g. `1s`, `3mb`, `20K`), etc.
+* Developer Ergonomics: support for relative timestamps in queries, e.g. `TS.RANGE key -6hrs -3hrs`, unit suffixes (e.g. `1s`, `3mb`, `20K`), 
+    and a more expressive query language.
 
 ### Module OnLoad
 
@@ -56,11 +54,7 @@ With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeserie
 through HELLO, MODULE LIST, and INFO commands. Also, metrics and configs will be prefixed with this name (by design for Modules).
 
 Regarding the Module Data type name, because ValkeyTimeSeries's Module Data type (the current version) is not compatible with
-RedisTimeSeries, it is not named same as RedisTimeSeries's. We are naming it "vktseries" and it is exactly 9 characters as enforced by
-core Valkey logic for Module data types.
-This will allow us to create a new Module Data Type in the future which can be compatible with the RedisTimeSeries and this will
-be named the same as RedisTimeSeries's timeseries data type. When we do this, we will need to support both Data Types (current
-version) and the future version and their names must be unique.
+RedisTimeSeries, it is not named same as RedisTimeSeries's. 
 
 ### Module Unload
 
@@ -81,13 +75,6 @@ ValkeyTimeSeries implements persistence related Module data type callbacks for t
 * rdb_load: Deserializes time series objects from RDB.
 * aux_load: Deserializes the timeseries indexes from RDB
 * aof_rewrite: Emits commands into the AOF during the AOF rewriting process.
-
-### RDB Save and Load
-
-During RDB Save of a time series object, the Module will save the number of filters, expansion rate, false positive rate.
-And for every underlying time series in this object, .
-
-In addition to the TimeSeries data proper, we also save the time series index dataobject's key, TTL, and serialized value of the bloom object
 
 ### RDB Compatibility with RedisTimeSeries
 
@@ -125,16 +112,6 @@ Cons
 that creates time series & inserts items into them. Next, this can be re-played on a Valkey Server (with ValkeyTimeSeries loaded).
 Then, the user can move their existing workload to the Valkey server (with ValkeyTimeSeries loaded).
 
-Pros
-* TimeSeries objects can be created on the user's existing system (with Rebloom) and the user can also populate the objects
-    by adding items (TS.ADD/TS.MADD) **BEFORE** switching to Valkey (with ValkeyTimeSeries).
-
-Cons
-* The user will need to manage AOF file generation on the server (with RedisTimeSeries) and ensure that the contents do not get
-    re-written (e.g. as a result of BGREWRITEAOF) into a RDB file. This is because the RDB file with timeseries data
-    generated by RedisTimeSeries is not compatible with ValkeyTimeSeries. The main drawback here is that the AOF can exceed a size
-    limit and get truncated / re-written.
-
 ### Memory Management
 
 On Module Load, the Rust Module overrides the memory allocator that delegates the allocation and deallocation tasks
@@ -152,20 +129,18 @@ The timeseries data type also supports memory management related callbacks:
     for aggregated objects.
 
 ### Replication
-
-Every TimeSeries based write operation (creation, adding and removing samples) will be replicated to replica nodes. Attempts 
-of adding an already existing item to a bloom object (which returns 0) will not replicated.
-
+Every TimeSeries based write operation (creation, adding and removing samples) will be replicated to replica nodes.
 
 ## Specification
 
 ### TimeSeries Structure
 Each time series object is represented by a sorted list of chunks, each containing a list of samples. Each sample is a tuple
-of timestamp and a 64bit float value. 
+of 64bit epoch based timestamp and a 64bit float value. 
 
-A time series is identified by a series of label-value pairs used to retrieve the series in queries. Given that these
-label values are used to group semantically similar time series, they are interned in a global dictionary to reduce
-module memory.
+A time series is optionally identified by a series of label-value pairs used to retrieve the series in queries. Given that these
+label are used to group semantically similar time series, they are necessarily duplicated. We take advantage of this fact to 
+intern label-value pairs, meaning that only a single allocation is made per unique pair, irrespective of the number of series
+it occurs in.
 
 The time series object also contains metadata like the retention policy, compaction policy, etc.
 
@@ -175,19 +150,38 @@ Chunks can also be configured to store values as Uncompressed, but this is provi
 
 ### TimeSeries Indexing
 In addition to labels, a time series is uniquely identified by an opaque 64bit unsigned int. Each label-value pair
-is mapped to the id of each series which contains that attribute. The mapping is implemented as an [Adaptive Radix Tree (ART)](https://www.reddit.com/r/rust/comments/1f3m23b/blart_020_released_fastest_adaptive_radix_tree/), 
+is mapped to the id of each series which contains that attribute. The mapping is implemented as an [Adaptive Radix Tree (ART)](https://db.in.tum.de/~leis/papers/ART.pdf) (pdf), 
 where each node is a 64bit [Roaring BitMap](https://roaringbitmap.org/about/).
 
 The ART allows for efficient lookups and insertions, while the Roaring BitMap performs fast set operations on the series ids.
-In addition,the ART supports path compression for quick prefix searches and memory savings based on our indexing scheme (see below).
+In addition, the ART supports path compression for and additional memory savings based on our indexing scheme (see below).
 
 ### TimeSeries Indexing Scheme
-The ART is used to index time series based on their labels. 
-For each unique combination of label and value, we create a key by concatenating the label and value strings. e.g. "region=us-west".
-This key is used to manage a 64bit roaring bitmap that contains the ids of all time series that have that label-value pair. To
-retrieve ids for a given list of label-value pair, we look up the keys in the ART and perform an intersection.
+The ART is used to index time series based on their labels. For each unique combination of label and value, we create a key by concatenating 
+the label and value strings. e.g. "region=us-west". This key is used to manage a 64bit roaring bitmap that contains the ids of all time series 
+that have that label-value pair. To retrieve ids for a given list of label-value pair, we look up the keys in the ART and perform an intersection.
 We also maintain a mapping from id to valkey key to retrieve the time series after querying.
 
+### TimeSeries Filter Enhancements
+We support an extension to the RedisTimeseries filter syntax to support regex based filtering using the operators `=~` and `!~`. 
+For example:
+
+* `TS.QUERYINDEX region=~us-west.*` will return all time series that have a label `region` with a value that starts with `us-west`.
+
+* `TS.QUERYINDEX region!=~us-west.*` will return all time series that have a label `region` with a value that does not start with `us-west`.
+
+In addition, we add Prometheus style selectors to the filter syntax (essentially an [Instant Vector](https://promlabs.com/blog/2020/07/02/selecting-data-in-promql/#instant-vector-selectors) selector). For example:
+
+* `TS.QUERYINDEX latency{region=~"us-west-*",service="inference"}` will return all series recording latency for the inference service in all us west regions. 
+
+* `TS.MRANGE 100 500 {service="inference"}` will return samples for the inference service across all series 
+
+We also support `"OR"` matching for Prometheus style selectors. For example:
+
+* `TS.QUERYINDEX latency{region="us-west" or region="us-east"}` will return all series recording latency samples in either `us-west` or `us-east` regions.
+
+Note that for selectors of the form `metric{label="value"}`, `metric` is matched against the reserved `__name__` label. In other words,
+the series is expected to have a label `__name__` with the value `metric`.
 
 ### RDB Format
 
@@ -204,18 +198,25 @@ This API can be used to create a new time series object.
 see https://redis.io/docs/latest/commands/ts.create/
 
 **`TS.ALTER <key> `**
+
 see https://redis.io/docs/latest/commands/ts.alter/
 
 **`TS.DEL <key> fromTimestamp toTimestamp`**
+
 see https://redis.io/docs/latest/commands/ts.del/
 
 **`TS.ADD <key> `**
+
 see https://redis.io/docs/latest/commands/ts.add/
+When compactions are supported, we should offload the compaction to a thread.
 
 **`TS.MADD <key> <item> [<item> ...]`**
+
 see https://redis.io/docs/latest/commands/ts.madd/
+When compactions are supported, we should use `rust's` parallelism to perform the compactions in the background.
 
 **`TS.GET <key> [LATEST]`**
+
 see https://redis.io/docs/latest/commands/ts.get/
 
 Get the last sample from a series.
@@ -227,20 +228,24 @@ see https://redis.io/docs/latest/commands/ts.mget/
 
 
 **`TS.INFO <key>`**
+
 see https://redis.io/docs/latest/commands/ts.info/
 
 **`TS.RANGE <key> fromTimestamp toTimestamp`**
+
 Query a range of data
 
 see https://redis.io/docs/latest/commands/ts.range/
 
 **`TS.MRANGE <key> fromTimestamp toTimestamp`**
+
 Query a range of data across multiple series
 
 see https://redis.io/docs/latest/commands/ts.mrange/
 
 
 **`TS.QUERYINDEX filterExpression ...`**
+
 Returns the list of time series keys that match the filter expression(s).
 see https://redis.io/docs/latest/commands/ts.mrange/
 
@@ -248,62 +253,51 @@ see https://redis.io/docs/latest/commands/ts.mrange/
 The following are NEW commands which are not included in RedisTimeSeries:
 
 
-```
-TS.CARD FILTER filter... [START fromTimestamp] [END toTimestamp]
-```
+**`TS.CARD FILTER filter... [START fromTimestamp] [END toTimestamp]`**
+
 returns the number of unique time series that match a given filter set. A time range can optionally be provided to
 restrict the results to only series which have samples in the range `[fromTimestamp, toTimestamp]`.
 
 #### Required arguments
 
-<details open><summary><code>filter</code></summary>
+<code>filter</code>
+
 Repeated series selector argument that selects the series to return. At least one filter argument must be provided.
-</details>
 
 #### Optional Arguments
-<details open><summary><code>fromTimestamp</code></summary>
+<code>fromTimestamp</code>
+
 Start timestamp, inclusive. Results will only be returned for series which have samples in the range `[fromTimestamp, toTimestamp]`
-</details>
-<details open><summary><code>toTimestamp</code></summary>
+
+<code>toTimestamp</code>
+
 End timestamp, inclusive.
-</details>
+
 
 #### Return
 
 [Integer number](https://redis.io/docs/reference/protocol-spec#resp-integers) of unique time series.
-The data section of the query result consists of a list of objects that contain the label name/value pairs which identify
-each series.
 
 
-#### Error
+**`TS.LABELNAMES FILTER selector... [START fromTimestamp] [END toTimestamp]`**
 
-Return an error reply in the following cases:
-
-TODO
-
-#### Examples
-TODO
-
-```
-TS.LABELNAMES FILTER selector... [START fromTimestamp] [END toTimestamp]
-```
 returns a list of label names for select series. If a time range is specified, only labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`] are returned.
 
 ### Required Arguments
-<details open><summary><code>fromTimestamp</code></summary>
+<code>fromTimestamp</code>
 Repeated series selector argument that selects the series to return. At least one selector argument must be provided..
-</details>
+
 
 ### Optional Arguments
-<details open><summary><code>fromTimestamp</code></summary>
+<code>fromTimestamp</code>
+
 If specified along with `toTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
-</details>
 
-<details open><summary><code>toTimestamp</code></summary>
+<code>toTimestamp</code>
+
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
-</details>
 
 #### Return
 
@@ -318,9 +312,7 @@ Return an error reply in the following cases:
 
 #### Examples
 
-```
-TS.LABELNAMES FILTER up process_start_time_seconds{job="prometheus"}
-```
+**`TS.LABELNAMES FILTER up process_start_time_seconds{job="prometheus"}`**
 ```
 1) "__name__",
 2) "instance",
@@ -329,29 +321,31 @@ TS.LABELNAMES FILTER up process_start_time_seconds{job="prometheus"}
 ```
 
 
-```
-TS.LABELVALUES label [START fromTimestamp] [END toTimestamp]
-```
+**`TS.LABELVALUES label [START fromTimestamp] [END toTimestamp]`**
+
 returns a list of label values for a provided label name. Optionally a time range can be specified to limit the result to only 
 labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`].
 
 #### Required Arguments
 
-<details open><summary><code>label</code></summary>
+<code>label</code>
+
 The label name for which to retrieve mut values.
-</details>
+
 
 #### Optional Arguments
 
-<details open><summary><code>fromTimestamp</code></summary>
+<code>fromTimestamp</code>
+
 If specified along with `toTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
-</details>
 
-<details open><summary><code>toTimestamp</code></summary>
+
+<code>toTimestamp</code>
+
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
-</details>
+
 
 #### Return
 
@@ -430,6 +424,9 @@ These commands are scheduled for the second phase of development.
 Work is in progress to support PromQL as a query language, including transform, aggregation and rollup function support. A stretch goal is to support
 alerts and notifications based on the query results.
 
+We may support a tiered storage model where data is moved to a higher compression chunks (with higher access latency) after a certain period of time. 
+
+
 ### Configurations
 
 The default properties for TimeSeries can be controlled using configs. The values of the
@@ -444,12 +441,6 @@ Supported Module configurations:
     objects created will use the expansion rate specified by this config. This controls the capacity of the new filter
     that gets added to the list of filters as a result of scaling.
 
-### Constants
-1. bloom_large_item_threshold: Memory usage of a timeseries beyond which timeseries are exempted from defrag operations
-    and when deleted, the Module will indicate the object's free_effort as 0 to be async freed.
-2. bloom_filter_max_memory_usage: The maximum memory usage of a particular time series that is allowed. Creation of
-    time seriess larger than this will not be allowed.
-
 ### ACL
 
 The ValkeyTimeSeries module will introduce a new ACL category - @ts.
@@ -463,8 +454,12 @@ a keyspace event after the data is mutated. Commands include: TS.CREATE, TS.ADD,
 
 * Event type: VALKEYMODULE_NOTIFY_GENERIC
 * Event name: One of the two event names will be published based on the command & scenario:
- * bloom.add: Any TS.ADD, TS.MADD, or TS.INSERT command that results in adding item/s to a timeseries.
- * bloom.reserve: Any TS.ADD, TS.MADD, TS.INSERT, or TS.RESERVE command that results in creation of a timeseries.
+ * ts.add
+ * ts.create
+ * ts.alter
+ * ts.madd
+ * ts.del
+ 
 
 
 Users can subscribe to the bloom events via the standard keyspace event pub/sub. For example,
@@ -478,11 +473,7 @@ Users can subscribe to the bloom events via the standard keyspace event pub/sub.
 
 ### Info metrics
 
-Info metrics are visible through the `info bloom` or `info modules` command:
-* Number of time series objects
-* Total bytes used by time series objects
-
-In addition to this, we have a specific API (`TS.INFO`) that can be used to list information and stats on the timeseries.
+We have a specific API (`TS.INFO`) that can be used to list information and stats on the timeseries.
 
 ## References
 * [ValkeyTimeSeries GitHub Repo](https://github.com/ccollie/valkey-tslib)
