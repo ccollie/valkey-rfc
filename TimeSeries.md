@@ -7,13 +7,25 @@ Status: PR
 
 ## Abstract
 
-The proposed feature is ValkeyTimeSeries which is a Rust based Module that brings a native time series data type to Valkey.
+The proposed feature is ValkeyTimeSeries which is a [Rust](https://www.rust-lang.org/) based Module that brings a native time series data type to Valkey.
+
+To help users migrate from Redis and RedisTimeSeries, as well as capitalize on existing OSS RedisTimeSeries client libraries, 
+the module is designed to be API-compatible with Redis Ltd.’s RedisTimeSeries.
 
 ## Motivation
-Support for a time series data type in Valkey is essential for developers who need to store and query time series data. 
-Redis Ltd.‘s TimeSeries module is published under a proprietary license, hence cannot be distributed freely with ValKey.
+Support for a time series data type in Valkey is essential for developers wanting to use Valkey in domains like observability, 
+monitoring, IoT, and analytics.
 
-We propose a [Rust](https://www.rust-lang.org/) based implementation to allows for better memory management, performance and safety.
+Valkey TimeSeries aims to enable the unique characteristics of time-series data:
+
+* Efficient Storage: optimize for high write throughput and data compression, enabling us to handle the continuous influx of large volumes of timestamped data.
+* Real-Time Analytics: support real-time querying and computation, allowing users to detect trends, anomalies, or patterns as they occur.
+* Time-Centric Queries: allow for time-based aggregations and querying over specific time intervals with high efficiency.
+
+Although Valkey time series modeling can be achieved natively in ValKey using built-in types like `stream`s and `zset`s,
+a dedicated time series data type can provide better performance, memory efficiency, and ease of use for time series workloads.
+
+Redis Ltd.‘s TimeSeries module is published under a proprietary license, hence cannot be distributed freely with ValKey.
 
 ## Design Considerations
 
@@ -23,12 +35,12 @@ It allows customization of properties of each series (compression, retention, co
 configurations. 
 
 We aim to be efficient both in memory usage and performance. This is achieved through:
-* use of parallelism and background tasks where appropriate (series compactions, index maintenance, etc)
+* use of parallelism and background tasks where appropriate (multi-chunk fetches, series compactions, index maintenance, etc)
 * efficient memory management (interning for labels, index prefix compression, Roaring Bitmaps for series ids)
 * efficient filtering and indexing
 
 We have the following terminologies:
-* TimeSeries Object: The top level structure representing the data type. It contains meta data and a list of lower-level
+* TimeSeries Object: The top level structure representing the data type. It contains metadata and a list of lower-level
                 chunks containing the actual sample data.
 * Sample: A tuple of timestamp and value.
 * Chunk: A container for samples. Chunks have configurable size and encoding policies.
@@ -420,11 +432,14 @@ Currently following commands (from RedisTimeSeries) are not (currently) supporte
 
 These commands are scheduled for the second phase of development.
 
-### Future Enhancements
-Work is in progress to support PromQL as a query language, including transform, aggregation and rollup function support. A stretch goal is to support
+### Possible Future Enhancements
+
+* Work is in progress to support PromQL as a query language, including transform, aggregation and rollup function support. A stretch goal is to support
 alerts and notifications based on the query results.
 
-We may support a tiered storage model where data is moved to a higher compression chunks (with higher access latency) after a certain period of time. 
+* We may support a tiered storage model where data is moved to a higher compression chunks (with higher access latency) after a certain period of time. 
+
+* Use the [augurs](https://github.com/grafana/augurs) library to support more complex queries, like forecasting and anomaly detection.
 
 
 ### Configurations
