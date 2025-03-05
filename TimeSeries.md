@@ -249,12 +249,23 @@ Query a range of data
 
 see https://redis.io/docs/latest/commands/ts.range/
 
+**`TS.REVRANGE <key> fromTimestamp toTimestamp`**
+
+Query a range of data in reverse order
+
+see https://redis.io/docs/latest/commands/ts.revrange/
+
 **`TS.MRANGE <key> fromTimestamp toTimestamp`**
 
 Query a range of data across multiple series
 
 see https://redis.io/docs/latest/commands/ts.mrange/
 
+**`TS.MREVRANGE <key> fromTimestamp toTimestamp`**
+
+Query a range of data across multiple series in the reverse order
+
+see https://redis.io/docs/latest/commands/ts.mrevrange/
 
 **`TS.QUERYINDEX filterExpression ...`**
 
@@ -425,10 +436,6 @@ Currently following commands (from RedisTimeSeries) are not (currently) supporte
 **`TS.INCRBY`**
 
 **`TS.DECRBY`**
-
-**`TS.REVRANGE`**
-
-**`TS.MREVRANGE`**
 
 These commands are scheduled for the second phase of development.
 
