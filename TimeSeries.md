@@ -46,6 +46,7 @@ We have the following terminologies:
 * Chunk: A container for samples. Chunks have configurable size and encoding policies.
 
 ### Enhancements over RedisTimeSeries
+* Explicit support for multiple databases, allowing users to create time series objects in different databases.
 * Joins: ValkeyTimeSeries will support joins between time series objects, including INNER, OUTER and ASOF joins
 * Filtering: support filtering using Prometheus style selectors
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
