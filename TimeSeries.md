@@ -238,6 +238,13 @@ Get the last sample from a series.
 Get the last sample from a multiple series specified by a filter.
 see https://redis.io/docs/latest/commands/ts.mget/
 
+**`TS.INCRBY <key> delta`**
+increment the value of the last sample in a time series
+see https://redis.io/docs/latest/commands/ts.incrby/
+
+**`TS.DECRBY <key> delta`**
+increment the value of the last sample in a time series
+see https://redis.io/docs/latest/commands/ts.decrby/
 
 **`TS.INFO <key>`**
 
@@ -325,15 +332,6 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 #### Return
 
 An array of string label names.
-
-#### Error
-
-Return an error reply in the following cases:
-
-- Invalid options.
-- TODO
-
-#### Examples
 
 **`TS.LABELNAMES FILTER up process_start_time_seconds{job="prometheus"}`**
 ```
@@ -433,9 +431,6 @@ Currently following commands (from RedisTimeSeries) are not (currently) supporte
 
 **`TS.DELETERULE`**
 
-**`TS.INCRBY`**
-
-**`TS.DECRBY`**
 
 These commands are scheduled for the second phase of development.
 
