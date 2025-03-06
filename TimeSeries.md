@@ -498,4 +498,8 @@ Users can subscribe to the bloom events via the standard keyspace event pub/sub.
 We have a specific API (`TS.INFO`) that can be used to list information and stats on the timeseries.
 
 ## References
-* [ValkeyTimeSeries GitHub Repo](https://github.com/ccollie/valkey-tslib)
+* [ValkeyTimeSeries GitHub Repo](https://github.com/ccollie/valkey-timeseries)
+* [RedisTimeSeries](https://oss.redislabs.com/redistimeseries/)
+* [Prometheus](https://prometheus.io/)
+* [Adaptive Radix Tree (ART)](https://db.in.tum.de/~leis/papers/ART.pdf)
+* [Roaring Bitmaps](https://roaringbitmap.org/about/)
