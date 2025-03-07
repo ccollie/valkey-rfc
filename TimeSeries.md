@@ -51,6 +51,7 @@ We have the following terminologies:
 * Filtering: support filtering using Prometheus style selectors
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
 * Rounding: support for rounding sample values to a specified precision. This is enforced for all samples in a time series.
+* Active expiration: support for active pruning of time series data based on retention.
 * Developer Ergonomics: support for relative timestamps in queries, e.g. `TS.RANGE key -6hrs -3hrs`, unit suffixes (e.g. `1s`, `3mb`, `20K`), 
     and a more expressive query language.
 
@@ -450,12 +451,16 @@ configs below are only used on a timeseries if the user does not specify the pro
 TS.INSERT or TS.RESERVE can override the default properties.
 
 Supported Module configurations:
-1. Duplicate Policy
-2. Default Chunk Size: Controls the default chunk memory capacity. When create operations (Ts.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
+1. RETENTION_POLICY: The default retention policy for time series (ms). Default to 0, which means no retention policy.
+2. DUPLICATE_POLICY: The default duplicate policy for time series. Default to "LAST", which means the last sample is kept when duplicates are added.
+3. CHUNK_SIZE_BYTES: Controls the default chunk memory capacity. When create operations (Ts.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
     will use the capacity specified by this config. 
-3. ts.chunk_encoding: Controls the default expansion rate. When create operations (TS.ADD/MADD) are used, bloom
-    objects created will use the expansion rate specified by this config. This controls the capacity of the new filter
-    that gets added to the list of filters as a result of scaling.
+4. ENCODING: Controls the default chunk encoding. Default to "COMPRESSED", which is the Gorilla XOR compression.
+5. IGNORE_MAX_TIME_DIFF: Defines the max delta between timestamps to consider them a duplicate. Default to false.
+6. IGNORE_MAX_VALUE_DIFF: The maximum delta between values to consider them a duplicate.
+7. ROUND_DIGITS: Controls the default number of digits to round input sample values to. Default to 255.
+8. SIGNIFICANT_DIGITS: Controls the default number of significant digits to round input sample values to. Default to 255.
+
 
 ### ACL
 
