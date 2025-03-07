@@ -84,9 +84,7 @@ Valkey does not allow unloading of Modules that exports a module data type.
 ValkeyTimeSeries implements persistence related Module data type callbacks for the TimeSeries data type:
 
 * rdb_save: Serializes timeseries objects to RDB.
-* aux_save: Serializes the timeseries indexes
 * rdb_load: Deserializes time series objects from RDB.
-* aux_load: Deserializes the timeseries indexes from RDB
 * aof_rewrite: Emits commands into the AOF during the AOF rewriting process.
 
 ### RDB Compatibility with RedisTimeSeries
