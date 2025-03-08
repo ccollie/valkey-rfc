@@ -192,6 +192,9 @@ We also support `"OR"` matching for Prometheus style selectors. For example:
 
 * `TS.QUERYINDEX latency{region="us-west" or region="us-east"}` will return all series recording latency samples in either `us-west` or `us-east` regions.
 
+As per Prometheus conventions, all regex matchers are anchored. For example, a match of env=~"foo" is treated as env=~"^foo$", so any anchors 
+used in the query will be redundant. 
+
 Note that for selectors of the form `metric{label="value"}`, `metric` is matched against the reserved `__name__` label. In other words,
 the series is expected to have a label `__name__` with the value `metric`.
 
