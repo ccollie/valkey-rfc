@@ -1,6 +1,6 @@
 ---
 RFC: 4
-Status: PR
+Status: Proposed
 ---
 
 # ValkeyTimeSeries Module RFC
@@ -20,7 +20,7 @@ Valkey TimeSeries aims to enable the unique characteristics of time-series data:
 
 * Efficient Storage: optimize for high write throughput and data compression, enabling us to handle the continuous influx of large volumes of timestamped data.
 * Real-Time Analytics: support real-time querying and computation, allowing users to detect trends, anomalies, or patterns as they occur.
-* Time-Centric Queries: allow for time-based aggregations and querying over specific time intervals with high efficiency.
+* Time-centric Queries: allow for time-based aggregations and querying over specific time intervals with high efficiency.
 
 Although Valkey time series modeling can be achieved natively in ValKey using built-in types like `stream`s and `zset`s,
 a dedicated time series data type can provide better performance, memory efficiency, and ease of use for time series workloads.
@@ -62,7 +62,7 @@ time series specific configurations and the TimeSeries ACL category.
 
 * Module name: ts
 * Data type name: `vktseries`
-* Module shared object file name: ValkeyTimeSeries.so
+* Module shared object file name: valkey_timeseries.so
 
 With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeseries in its Module name which is accessible by clients
 through HELLO, MODULE LIST, and INFO commands. Also, metrics and configs will be prefixed with this name (by design for Modules).
@@ -120,7 +120,7 @@ Cons
 * The user will need to re-create the time series (using TS.CREATE/TS.ADD) and populate these objects **AFTER**
     switching to Valkey (with ValkeyTimeSeries).
 
-2. Users can generate an AOF file from a server (that has the RedisTimeSeries module loaded) and with an on-going timeseries workload
+Users can generate an AOF file from a server (that has the RedisTimeSeries module loaded) and with an on-going timeseries workload
 that creates time series & inserts items into them. Next, this can be re-played on a Valkey Server (with ValkeyTimeSeries loaded).
 Then, the user can move their existing workload to the Valkey server (with ValkeyTimeSeries loaded).
 
@@ -186,7 +186,7 @@ In addition, we add Prometheus style selectors to the filter syntax (essentially
 
 * `TS.QUERYINDEX latency{region=~"us-west-*",service="inference"}` will return all series recording latency for the inference service in all us west regions. 
 
-* `TS.MRANGE 100 500 {service="inference"}` will return samples for the inference service across all series 
+* `TS.MRANGE -6hrs -3hrs {service="inference"}` will return samples recorded between 3 and 6 hours ago for the inference service across all series 
 
 We also support `"OR"` matching for Prometheus style selectors. For example:
 
