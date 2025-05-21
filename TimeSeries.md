@@ -13,6 +13,7 @@ To help users migrate from Redis and RedisTimeSeries, as well as capitalize on e
 the module is designed to be API-compatible with Redis Ltd.’s RedisTimeSeries.
 
 ## Motivation
+
 Support for a time series data type in Valkey is essential for developers wanting to use Valkey in domains like observability, 
 monitoring, IoT, and analytics.
 
@@ -30,12 +31,12 @@ Redis Ltd.‘s TimeSeries module is published under a proprietary license, hence
 ## Design Considerations
 
 The ValkeyTimeSeries module brings a time series module data type to Valkey and provides commands to create 
-time series, operate on them (add sample, query, perform aggregations, compactions, downsampling and joins, etc).
-It allows customization of properties of each series (compression, retention, compactions, etc) through commands and 
+time series, operate on them (add sample, query, perform aggregations, compactions, downsampling and joins, etc.).
+It allows customization of the properties of each series (compression, retention, compactions, etc.) through commands and 
 configurations. 
 
 We aim to be efficient both in memory usage and performance. This is achieved through:
-* use of parallelism and background tasks where appropriate (multi-chunk fetches, series compactions, index maintenance, etc)
+* use of parallelism and background tasks where appropriate (multi-chunk fetches, series compactions, index maintenance, etc.)
 * efficient memory management (interning for labels, index prefix compression, Roaring Bitmaps for series ids)
 * efficient filtering and indexing
 
@@ -47,18 +48,18 @@ We have the following terminologies:
 
 ### Enhancements over RedisTimeSeries
 * Explicit support for multiple databases, allowing users to create time series objects in different databases.
-* Joins: ValkeyTimeSeries will support joins between time series objects, including INNER, OUTER and ASOF joins
+* Joins: ValkeyTimeSeries will support joins between time series objects, including INNER, OUTER, and ASOF joins
 * Filtering: support filtering using Prometheus style selectors
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
-* Rounding: support for rounding sample values to a specified precision. This is enforced for all samples in a time series.
+* Rounding: support for rounding sample values to specified precision. This is enforced for all samples in a time series.
 * Active expiration: support for active pruning of time series data based on retention.
 * Developer Ergonomics: support for relative timestamps in queries, e.g. `TS.RANGE key -6hrs -3hrs`, unit suffixes (e.g. `1s`, `3mb`, `20K`), 
     and a more expressive query language.
 
 ### Module OnLoad
 
-Upon loading, the module registers a new time series module based data type, creates time series (TS.*) commands,
-time series specific configurations and the TimeSeries ACL category.
+Upon loading, the module registers a new time series module-based data type, creates time series (TS.*) commands,
+timeseries specific configurations, and the TimeSeries ACL category.
 
 * Module name: ts
 * Data type name: `vktseries`
@@ -68,12 +69,12 @@ With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeserie
 through HELLO, MODULE LIST, and INFO commands. Also, metrics and configs will be prefixed with this name (by design for Modules).
 
 Regarding the Module Data type name, because ValkeyTimeSeries's Module Data type (the current version) is not compatible with
-RedisTimeSeries, it is not named same as RedisTimeSeries's. 
+RedisTimeSeries, it is not named the same as RedisTimeSeries's. 
 
 ### Module Unload
 
 Once the Module has been loaded, the `MODULE UNLOAD` will be rejected since Module Data type is created on load.
-Valkey does not allow unloading of Modules that exports a module data type.
+Valkey does not allow unloading of Modules that export a module data type.
 
 ```
 127.0.0.1:6379> MODULE UNLOAD timeseries
@@ -82,7 +83,7 @@ Valkey does not allow unloading of Modules that exports a module data type.
 
 ### Persistence
 
-ValkeyTimeSeries implements persistence related Module data type callbacks for the TimeSeries data type:
+ValkeyTimeSeries implements persistence-related Module data type callbacks for the TimeSeries data type:
 
 * rdb_save: Serializes timeseries objects to RDB.
 * rdb_load: Deserializes time series objects from RDB.
@@ -90,7 +91,7 @@ ValkeyTimeSeries implements persistence related Module data type callbacks for t
 
 ### RDB Compatibility with RedisTimeSeries
 
-ValkeyTimeSeries is not RDB Compatible with RedisTimeSeries.
+ValkeyTimeSeries is _**not**_ RDB Compatible with RedisTimeSeries.
 
 The metadata that gets written to the RDB is specific to the Module data type's structure and struct members.
 Additionally, the data within the underlying time series is specific to the implementation of
@@ -120,8 +121,8 @@ Cons
 * The user will need to re-create the time series (using TS.CREATE/TS.ADD) and populate these objects **AFTER**
     switching to Valkey (with ValkeyTimeSeries).
 
-Users can generate an AOF file from a server (that has the RedisTimeSeries module loaded) and with an on-going timeseries workload
-that creates time series & inserts items into them. Next, this can be re-played on a Valkey Server (with ValkeyTimeSeries loaded).
+Users can generate an AOF file from a server (that has the RedisTimeSeries module loaded) and with an ongoing timeseries workload
+that creates time series and inserts items into them. Next, this can be re-played on a Valkey Server (with ValkeyTimeSeries loaded).
 Then, the user can move their existing workload to the Valkey server (with ValkeyTimeSeries loaded).
 
 ### Memory Management
@@ -132,12 +133,12 @@ to allocate enough memory.
 
 The timeseries data type also supports memory management related callbacks:
 
-* free: Frees the time series object when it is deleted, expired or evicted.
+* free: Frees the time series object when it is deleted, expired, or evicted.
 * defrag: Supports active defrag for Bloom filter objects
 * mem_usage: Reports bytes used by a Bloom object and is used by the MEMORY USAGE command
 * copy: Supports a deep copy of time series objects and is used by the COPY command
-* free_effort: Determine whether the bloom object's memory needs to be lazy reclaimed or synchronously freed. We return
-    the number of filters in the bloom object as the free effort and this is similar to how the core handles free_effort
+* free_effort: Determine whether the bloom object's memory needs to be lazily reclaimed or synchronously freed. We return
+    the number of filters in the bloom object as the free effort, and this is similar to how the core handles free_effort
     for aggregated objects.
 
 ### Replication
@@ -147,10 +148,10 @@ Every TimeSeries based write operation (creation, adding and removing samples) w
 
 ### TimeSeries Structure
 Each time series object is represented by a sorted list of chunks, each containing a list of samples. Each sample is a tuple
-of 64bit epoch based timestamp and a 64bit float value. 
+of 64bit epoch-based timestamp and a 64bit float value. 
 
 A time series is optionally identified by a series of label-value pairs used to retrieve the series in queries. Given that these
-label are used to group semantically similar time series, they are necessarily duplicated. We take advantage of this fact to 
+labels are used to group semantically similar time series, they are necessarily duplicated. We take advantage of this fact to 
 intern label-value pairs, meaning that only a single allocation is made per unique pair, irrespective of the number of series
 it occurs in.
 
@@ -161,7 +162,7 @@ TimeSeries Chunks have configurable sample encoding strategies, defaulting to Go
 Chunks can also be configured to store values as Uncompressed, but this is provided only for compatibility with RedisTimeseries.
 
 ### TimeSeries Indexing
-In addition to labels, a time series is uniquely identified by an opaque 64bit unsigned int. Each label-value pair
+In addition to labels, a time series is uniquely identified by an opaque unsigned 64bit int. Each label-value pair
 is mapped to the id of each series which contains that attribute. The mapping is implemented as an [Adaptive Radix Tree (ART)](https://db.in.tum.de/~leis/papers/ART.pdf) (pdf), 
 where each node is a 64bit [Roaring BitMap](https://roaringbitmap.org/about/).
 
@@ -170,12 +171,15 @@ In addition, the ART supports path compression for additional memory savings bas
 
 ### TimeSeries Indexing Scheme
 The ART is used to index time series based on their labels. For each unique combination of label and value, we create a key by concatenating 
-the label and value strings. e.g. "region=us-west-2". This key is used to manage a 64bit roaring bitmap that contains the ids of all time series 
-that have that label-value pair. To retrieve ids for a given list of label-value pair, we look up the keys in the ART and perform an intersection.
-We also maintain a mapping from id to valkey key to retrieve the time series after querying.
+the label and value strings. E.g. "region=us-west-2". This key is used to manage a 64bit roaring bitmap that contains the ids of all time series 
+that have that label-value pair. To retrieve ids for a given list of label-value pairs, we look up the keys in the ART and perform an intersection.
+The ART natively supports range queries, so we can efficiently find keys with a given prefix. For example, we can search on the prefix "region=" to
+find all time series with a label "region".
+
+We also maintain a mapping from id to a valkey key to retrieve the time series after querying.
 
 ### TimeSeries Filter Enhancements
-We support an extension to the RedisTimeseries filter syntax to support regex based filtering using the operators `=~` and `!~`. 
+We support an extension to the RedisTimeseries filter syntax to support regex-based filtering using the operators `=~` and `!~`. 
 For example:
 
 * `TS.QUERYINDEX region=~us-west.*` will return all time series that have a label `region` with a value that starts with `us-west`.
@@ -200,30 +204,146 @@ the series is expected to have a label `__name__` with the value `metric`.
 
 ### RDB Format
 
-During RDB save, the Module data type callback is invoked, and we satime series specific data.
+During RDB save, the Module data type callback is invoked, and we store series-specific data.
 
 
 ### TimeSeries Command API
 
 The following are supported TimeSeries commands with API syntax compatible with RedisTimeSeries:
 
-**`TS.CREATE <key> ...`**
+**TS.CREATE** create a timeseries.
 
-This API can be used to create a new time series object.
-see https://redis.io/docs/latest/commands/ts.create/
+#### Syntax
+```
+TS.CREATE key
+  [RETENTION retentionPeriod]
+  [ENCODING <COMPRESSED|UNCOMPRESSED>]
+  [CHUNK_SIZE chunkSize]
+  [DUPLICATE_POLICY policy]
+  [DEDUPE_INTERVAL duplicateTimediff]
+  [[LABELS [label value ...] | METRIC metricName]
+```
+#### Options
+- **ENCODING**: The encoding to use for the timeseries. Default is `COMPRESSED`.
+- **DUPLICATE_POLICY**: The policy to use for duplicate samples. Default is `BLOCK`.
 
-**`TS.ALTER <key> `**
+### Required arguments
 
-see https://redis.io/docs/latest/commands/ts.alter/
+<details open><summary><code>key</code></summary>
+is key name for the time series.
+</details>
+
+<details open><summary><code>metric</code></summary> 
+The metric name in Prometheus format, e.g. `node_memory_used_bytes{hostname="host1.domain.com"}`
+is key name for time series. See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+</details>
+
+### Optional Arguments
+<details open><summary><code>retentionPeriod</code></summary>
+The period of time for which to keep series samples. Retention can be specified as an integer indication
+the duration as milliseconds, or a duration expression like `3wk`
+</details>
+
+<details open><summary><code>chunkSize</code></summary>
+The chunk size for the timeseries, in bytes. Default is `4096`.
+</details>
+
+<details open><summary><code>dedupeInterval</code></summary>
+Limits sample ingest to the timeseries. If a sample arrives less than `dedupeInterval` from the most
+recent sample it is ignored. Default is `0`
+</details>
+
+
+**TS.ALTER** alter a timeseries.
+
+#### Syntax
+```
+TS.ALTER key
+  [RETENTION retentionPeriod]
+  [CHUNK_SIZE chunkSize]
+  [DUPLICATE_POLICY policy]
+  [DEDUPE_INTERVAL duplicateTimediff]
+  [[LABELS [label value ...] | METRIC metricName]
+```
+#### Options
+- **ENCODING**: The encoding to use for the timeseries. Default is `COMPRESSED`.
+- **DUPLICATE_POLICY**: The policy to use for duplicate samples. Default is `BLOCK`.
+
+### Required arguments
+
+<details open><summary><code>key</code></summary>
+is key name for the time series.
+</details>
+
+### Optional Arguments
+<details open><summary><code>retentionPeriod</code></summary>
+The period of time for which to keep series samples. Retention can be specified as an integer indication
+the duration as milliseconds, or a duration expression like `3wk`
+</details>
+
+<details open><summary><code>chunkSize</code></summary>
+The chunk size for the timeseries, in bytes. Default is `4096`.
+</details>
+
 
 **`TS.DEL <key> fromTimestamp toTimestamp`**
 
 see https://redis.io/docs/latest/commands/ts.del/
 
-**`TS.ADD <key> `**
+**TS.ADD** Add a sample to a timeseries.
 
-see https://redis.io/docs/latest/commands/ts.add/
-When compactions are supported, we should offload the compaction to a thread.
+```
+TS.ADD key timestamp value
+```
+
+### Required Arguments
+
+<details open><summary><code>key</code></summary>
+is key name for the time series.
+</details>
+
+<details open><summary><code>timestamp</code></summary>
+The timestamp of the incoming sample
+</details>
+
+<details open><summary><code>value</code></summary>
+the value of the sample (double)
+</details>
+
+#### Return
+The timestamp of the added sample.
+
+### TS.DEL
+
+#### Syntax
+
+```
+TS.DEL key fromTimestamp toTimestamp
+```
+
+**TS.DEL** deletes data for a selection of series in a time range.
+
+#### Options
+
+- **key**: the key being deleted from.
+- **fromTimestamp**: Start timestamp, inclusive. Optional.
+- **toTimestamp**: End timestamp, inclusive. Optional.
+
+#### Return
+
+- the number of samples deleted.
+
+#### Error
+
+Return an error reply in the following cases:
+
+TODO
+
+#### Examples
+
+```
+TS.DEL requests:status:200 587396550 1587396550
+```
 
 **`TS.MADD <key> <item> [<item> ...]`**
 
@@ -283,7 +403,7 @@ Returns the list of time series keys that match the filter expression(s).
 see https://redis.io/docs/latest/commands/ts.mrange/
 
 
-The following are NEW commands which are not included in RedisTimeSeries:
+The following are NEW commands that are not included in RedisTimeSeries:
 
 
 **`TS.CARD FILTER filter... [START fromTimestamp] [END toTimestamp]`**
@@ -332,7 +452,7 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
-#### Return
+### Return
 
 An array of string label names.
 
@@ -357,7 +477,7 @@ labels from series which have data in the date range [`fromTimestamp` .. `toTime
 The label name for which to retrieve mut values.
 
 
-#### Optional Arguments
+### Optional Arguments
 
 <code>fromTimestamp</code>
 
@@ -371,7 +491,7 @@ If specified along with `fromTimestamp`, this limits the result to only labels f
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
 
-#### Return
+### Return
 
 An array of string values.
 
@@ -454,26 +574,26 @@ configs below are only used on a timeseries if the user does not specify the pro
 TS.INSERT or TS.RESERVE can override the default properties.
 
 Supported Module configurations:
-1. RETENTION_POLICY: The default retention policy for time series (ms). Default to 0, which means no retention policy.
-2. DUPLICATE_POLICY: The default duplicate policy for time series. Default to "LAST", which means the last sample is kept when duplicates are added.
-3. CHUNK_SIZE_BYTES: Controls the default chunk memory capacity. When create operations (Ts.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
+1. _ts-retention-policy_: The default retention policy for time series (ms). Default to 0, which means no retention policy.
+2. _ts-duplicate-policy_: The default duplicate policy for time series. Default to "LAST", which means the last sample is kept when duplicates are added.
+3. _ts-chunk-size-bytes_: Controls the default chunk memory capacity. When create operations (Ts.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
     will use the capacity specified by this config. 
-4. ENCODING: Controls the default chunk encoding. Default to "COMPRESSED", which is the Gorilla XOR compression.
-5. IGNORE_MAX_TIME_DIFF: Defines the max delta between timestamps to consider them a duplicate. Default to false.
-6. IGNORE_MAX_VALUE_DIFF: The maximum delta between values to consider them a duplicate.
-7. ROUND_DIGITS: Controls the default number of digits to round input sample values to. Default to 255.
-8. SIGNIFICANT_DIGITS: Controls the default number of significant digits to round input sample values to. Default to 255.
+4. _ts-encoding_: Controls the default chunk encoding. Default to "COMPRESSED", which is the Gorilla XOR compression.
+5. _ts-ignore-max-time-diff_: Defines the max delta between timestamps to consider them a duplicate. Default to false.
+6. _ts-ignore-max-val-diff_: The maximum delta between values to consider them a duplicate.
+7. _ts-round-digits_: Controls the default number of digits to round input sample values to. Default to 255.
+8. _ts-significant_digits_: Controls the default number of significant digits to round input sample values to. Default to 255.
 
 
 ### ACL
 
-The ValkeyTimeSeries module will introduce a new ACL category - @ts.
+The ValkeyTimeSeries module will introduce a new ACL category - @timeseries.
 
-There are 4 existing ACL categories which are updated to include new TimeSeries commands: @read, @write, @fast, @slow.
+There are four existing ACL categories which are updated to include new TimeSeries commands: @read, @write, @fast, @slow.
 
 ### Keyspace Event Notification
 
-Every time series based write command (that involves mutation as explained in the section above) will be made to publish
+Every timeseries-based write command (that involves mutation as explained in the section above) will be made to publish
 a keyspace event after the data is mutated. Commands include: TS.CREATE, TS.ADD, TS.MADD.
 
 * Event type: VALKEYMODULE_NOTIFY_GENERIC
@@ -500,7 +620,7 @@ Users can subscribe to the bloom events via the standard keyspace event pub/sub.
 We have a specific API (`TS.INFO`) that can be used to list information and stats on the timeseries.
 
 ## References
-* [ValkeyTimeSeries GitHub Repo](https://github.com/ccollie/valkey-timeseries)
+* [valkey-timeseries GitHub Repo](https://github.com/ccollie/valkey-timeseries)
 * [RedisTimeSeries](https://oss.redislabs.com/redistimeseries/)
 * [Prometheus](https://prometheus.io/)
 * [Adaptive Radix Tree (ART)](https://db.in.tum.de/~leis/papers/ART.pdf)
