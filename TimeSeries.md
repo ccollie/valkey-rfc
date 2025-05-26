@@ -103,7 +103,7 @@ Because of this, it is not possible to be RDB compatible with RedisTimeSeries.
 
 Module data types (including timeseries) can implement a callback function that will be triggered for TimeSeries objects to rewrite
 its data as command/s. From the AOF callback, we will handle AOF rewrite by saving a TS.LOAD command with the key, TTL, and
-serialized value of the corresponding bloom object.
+serialized value of the corresponding time series object.
 
 ### Migrating workloads from RedisTimeSeries:
 
@@ -134,12 +134,10 @@ to allocate enough memory.
 The timeseries data type also supports memory management related callbacks:
 
 * free: Frees the time series object when it is deleted, expired, or evicted.
-* defrag: Supports active defrag for Bloom filter objects
-* mem_usage: Reports bytes used by a Bloom object and is used by the MEMORY USAGE command
+* defrag: Supports active defrag for TimeSeries objects
+* mem_usage: Reports bytes used by a TimeSeries object and is used by the MEMORY USAGE command
 * copy: Supports a deep copy of time series objects and is used by the COPY command
-* free_effort: Determine whether the bloom object's memory needs to be lazily reclaimed or synchronously freed. We return
-    the number of filters in the bloom object as the free effort, and this is similar to how the core handles free_effort
-    for aggregated objects.
+* free_effort: Determine whether the TimeSeries object's memory needs to be lazily reclaimed or synchronously freed.
 
 ### Replication
 Every TimeSeries based write operation (creation, adding and removing samples) will be replicated to replica nodes.
@@ -606,7 +604,7 @@ a keyspace event after the data is mutated. Commands include: TS.CREATE, TS.ADD,
  
 
 
-Users can subscribe to the bloom events via the standard keyspace event pub/sub. For example,
+Users can subscribe to the time series events via the standard keyspace event pub/sub. For example,
 
 ```text
 1. enable keyspace event notifications:
