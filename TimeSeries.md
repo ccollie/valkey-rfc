@@ -182,7 +182,7 @@ For example:
 
 * `TS.QUERYINDEX region=~us-west.*` will return all time series that have a label `region` with a value that starts with `us-west`.
 
-* `TS.QUERYINDEX region!=~us-west.*` will return all time series that have a label `region` with a value that does not start with `us-west`.
+* `TS.QUERYINDEX region!~us-west.*` will return all time series that have a label `region` with a value that does not start with `us-west`.
 
 In addition, we add Prometheus style selectors to the filter syntax (essentially an [Instant Vector](https://promlabs.com/blog/2020/07/02/selecting-data-in-promql/#instant-vector-selectors) selector). For example:
 
@@ -194,7 +194,7 @@ We also support `"OR"` matching for Prometheus style selectors. For example:
 
 * `TS.QUERYINDEX latency{region="us-west" or region="us-east"}` will return all series recording latency samples in either `us-west` or `us-east` regions.
 
-As per Prometheus conventions, all regex matchers are anchored. For example, a match of env=~"foo" is treated as env=~"^foo$", so any anchors 
+As per Prometheus conventions, all regex matchers are anchored. For example, a matcher of `env=~"foo"` is treated as `env=~"^foo$"`, so any anchors 
 used in the query will be redundant. 
 
 Note that for selectors of the form `metric{label="value"}`, `metric` is matched against the reserved `__name__` label. In other words,
