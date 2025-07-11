@@ -546,7 +546,9 @@ limit=<number>: Limit the number of returned items to a given number for each se
        2) (integer) 425 
 ```
 
-**`TS.JOIN`**
+### TS.JOIN
+
+
 ```
 TS.JOIN leftKey rightKey fromTimestamp toTimestamp
     [[INNER] | [FULL] | [LEFT] | [RIGHT] | [ANTI] | [SEMI] | [ASOF [PREVIOUS | NEXT | NEAREST] [tolerance] ALLOW_EXACT_MATCH]]
@@ -559,7 +561,7 @@ TS.JOIN leftKey rightKey fromTimestamp toTimestamp
 
 Join two time series on sample timestamps. Performs an INNER join by default.
 
-## Required arguments
+### Required arguments
 
 <details open><summary><code>leftKey</code></summary>
 
@@ -587,7 +589,7 @@ Both keys must have been created before `TS.JOIN` is called.
 </details>
 
 
-## Optional arguments
+### Optional arguments
 
 <details open><summary><code>LEFT</code></summary>
 A `LEFT` join outputs the matching samples between both tables. In case no samples match from the left series, it returns 
@@ -690,7 +692,7 @@ performs an operation on the value in each returned row.
 `operator` takes one of the following types:
 
 | `operator`   | Description                                                             |
-  |--------------|-------------------------------------------------------------------------| 
+|--------------|-------------------------------------------------------------------------| 
 | `abs_diff`   | abs(`left` - `right`)                                                   |
 | `and`        | Returns `left` if either value is NAN, `right` otherwise                |
 | `avg`        | Arithmetic mean of both mut values                                      |
@@ -717,14 +719,14 @@ performs an operation on the value in each returned row.
 
 </details>
 
-## Return value
+### Return value
 
 Returns one of these replies:
 
 - @simple-string-reply - `OK` if executed correctly
 - @error-reply on error (invalid arguments, wrong key type, etc.), when `sourceKey` does not exist, when `destKey` does not exist, when `sourceKey` is already a destination of a compaction rule, when `destKey` is already a source or a destination of a compaction rule, or when `sourceKey` and `destKey` are identical
 
-## Examples
+### Examples
 
 <details open>
 <summary><b>Create a compaction rule</b></summary>
