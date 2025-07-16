@@ -620,6 +620,11 @@ Returns various cardinality statistics about the time series data.
 
 `limit` - the number of returned items to a given number for each set of statistics. By default, 10 items are returned.
 
+#### Example
+```
+TS.STATS LIMIT 5
+```
+
 ```
  1) totalSeries
  2) (integer) 508
