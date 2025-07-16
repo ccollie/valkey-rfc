@@ -613,7 +613,7 @@ TS.LABELVALUES region
 #### Syntax
 
 ```
-TS.STATS [limit=<number>]
+TS.STATS [limit limit]
 ```
 
 Returns various cardinality statistics about the time series data.
