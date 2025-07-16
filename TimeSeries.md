@@ -233,11 +233,6 @@ Create a new time series. This command creates a new time series with the specif
 is key name for the time series.
 </summary>
 
-<summary><code>metric</code>
-The metric name in Prometheus format, e.g. `node_memory_used_bytes{hostname="host1.domain.com"}`
-is key name for time series. See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-</summary>
-
 ### Optional Arguments
 <summary><code>retentionPeriod</code>
 The period of time for which to keep series samples. Retention can be specified as an integer indication
