@@ -681,17 +681,13 @@ is the key name for the right time series.
 
 Both keys must have been created before `TS.JOIN` is called.
 
-<details open><summary><code>fromTimestamp</code></summary>
-
+<summary><code>fromTimestamp</code>
 `fromTimestamp` is the first timestamp or relative delta from the current time of the request range.
+</summary>
 
-</details>
-
-<details open><summary><code>toTimestamp</code></summary>
-
+<summary><code>toTimestamp</code>
 `toTimestamp` is the last timestamp of the requested range, or a relative delta from `fromTimestamp`
-
-</details>
+</summary>
 
 
 #### Optional arguments
@@ -827,8 +823,6 @@ Returns one of these replies:
 
 #### Examples
 
-<details open>
-<summary><b>Create a compaction rule</b></summary>
 
 Create a time series to store the temperatures measured in Mexico City and Toronto.
 
@@ -848,7 +842,7 @@ Next, run the join.
 127.0.0.1:6379> TS.JOIN temp:CDMX temp:TOR REDUCE min 
 ```
 
-</details>
+
 
 ### Unsupported Commands
 
