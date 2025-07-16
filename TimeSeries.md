@@ -209,7 +209,7 @@ During RDB save, the Module data type callback is invoked, and we store series-s
 
 The following are supported TimeSeries commands with API syntax compatible with RedisTimeSeries:
 
-**TS.CREATE** create a timeseries.
+### TS.CREATE
 
 #### Syntax
 ```
@@ -221,38 +221,40 @@ TS.CREATE key
   [DEDUPE_INTERVAL duplicateTimediff]
   [[LABELS [label value ...] | METRIC metricName]
 ```
+Create a new time series. This command creates a new time series with the specified key and optional properties.
+
 #### Options
 - **ENCODING**: The encoding to use for the timeseries. Default is `COMPRESSED`.
 - **DUPLICATE_POLICY**: The policy to use for duplicate samples. Default is `BLOCK`.
 
 ### Required arguments
 
-<details open><summary><code>key</code></summary>
+<summary><code>key</code>
 is key name for the time series.
-</details>
+</summary>
 
-<details open><summary><code>metric</code></summary> 
+<summary><code>metric</code>
 The metric name in Prometheus format, e.g. `node_memory_used_bytes{hostname="host1.domain.com"}`
 is key name for time series. See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-</details>
+</summary>
 
 ### Optional Arguments
-<details open><summary><code>retentionPeriod</code></summary>
+<summary><code>retentionPeriod</code>
 The period of time for which to keep series samples. Retention can be specified as an integer indication
 the duration as milliseconds, or a duration expression like `3wk`
-</details>
+</summary>
 
-<details open><summary><code>chunkSize</code></summary>
+<summary><code>chunkSize</code>
 The chunk size for the timeseries, in bytes. Default is `4096`.
-</details>
+</summary>
 
-<details open><summary><code>dedupeInterval</code></summary>
+<summary><code>dedupeInterval</code>
 Limits sample ingest to the timeseries. If a sample arrives less than `dedupeInterval` from the most
 recent sample it is ignored. Default is `0`
-</details>
+</summary>
 
-
-**TS.ALTER** alter a timeseries.
+---
+### TS.ALTER
 
 #### Syntax
 ```
@@ -263,54 +265,59 @@ TS.ALTER key
   [DEDUPE_INTERVAL duplicateTimediff]
   [[LABELS [label value ...] | METRIC metricName]
 ```
+
+Alter an existing time series. This command allows you to change the properties of a time series, such as its 
+retention period, chunk size, and duplicate policy.
+
 #### Options
 - **ENCODING**: The encoding to use for the timeseries. Default is `COMPRESSED`.
 - **DUPLICATE_POLICY**: The policy to use for duplicate samples. Default is `BLOCK`.
 
-### Required arguments
+#### Required arguments
 
-<details open><summary><code>key</code></summary>
+<summary><code>key</code>
 is key name for the time series.
-</details>
+</summary>
 
-### Optional Arguments
-<details open><summary><code>retentionPeriod</code></summary>
+#### Optional Arguments
+<summary><code>retentionPeriod</code>
 The period of time for which to keep series samples. Retention can be specified as an integer indication
 the duration as milliseconds, or a duration expression like `3wk`
-</details>
+</summary>
 
-<details open><summary><code>chunkSize</code></summary>
+<summary><code>chunkSize</code>
 The chunk size for the timeseries, in bytes. Default is `4096`.
-</details>
+</summary>
 
+---
+### TS.ADD
 
-**`TS.DEL <key> fromTimestamp toTimestamp`**
-
-see https://redis.io/docs/latest/commands/ts.del/
-
-**TS.ADD** Add a sample to a timeseries.
-
+#### Syntax
 ```
 TS.ADD key timestamp value
 ```
 
-### Required Arguments
+Add a sample to a time series. If the key does not exist, it is created with the specified timestamp and value.
 
-<details open><summary><code>key</code></summary>
+
+#### Required Arguments
+
+<summary><code>key</code>
 is key name for the time series.
-</details>
+</summary>
 
-<details open><summary><code>timestamp</code></summary>
+<summary><code>timestamp</code>
 The timestamp of the incoming sample
-</details>
+</summary>
 
-<details open><summary><code>value</code></summary>
+<summary><code>value</code>
 the value of the sample (double)
-</details>
+</summary>
 
 #### Return
 The timestamp of the added sample.
 
+---
 ### TS.DEL
 
 #### Syntax
@@ -319,7 +326,7 @@ The timestamp of the added sample.
 TS.DEL key fromTimestamp toTimestamp
 ```
 
-**TS.DEL** deletes data for a selection of series in a time range.
+Deletes data for a selection of series in a time range.
 
 #### Options
 
@@ -342,71 +349,151 @@ TODO
 ```
 TS.DEL requests:status:200 587396550 1587396550
 ```
+---
 
-**`TS.MADD <key> <item> [<item> ...]`**
+### TS.MADD
 
+#### Syntax
+```
+TS.MADD <key> <item> [<item> ...]
+```
 see https://redis.io/docs/latest/commands/ts.madd/
 When compactions are supported, we should use `rust's` parallelism to perform the compactions in the background.
 
-**`TS.GET <key> [LATEST]`**
+---
+**`TS.GET`**
+
+```
+TS.GET <key> [LATEST]
+```
 
 see https://redis.io/docs/latest/commands/ts.get/
 
 Get the last sample from a series.
 
-**`TS.MGET [LATEST] [WITHLABELS | <SELECTED_LABELS label...>] FILTER filterExpr...`**
+---
+### TS.MGET
 
+```
+TS.MGET [LATEST] [WITHLABELS | <SELECTED_LABELS label...>] FILTER filterExpr...
+```
 Get the last sample from a multiple series specified by a filter.
 see https://redis.io/docs/latest/commands/ts.mget/
 
-**`TS.INCRBY <key> delta`**
-increment the value of the last sample in a time series
-see https://redis.io/docs/latest/commands/ts.incrby/
+---
 
-**`TS.DECRBY <key> delta`**
+### TS.INCRBY
+
+#### Syntax
+```
+TS.INCRBY <key> delta
+```
 increment the value of the last sample in a time series
+
+---
+### TS.DECRBY
+
+#### Syntax
+```
+TS.DECRBY <key> delta
+```
+
+Increment the value of the last sample in a time series
 see https://redis.io/docs/latest/commands/ts.decrby/
 
-**`TS.INFO <key>`**
+---
+### TS.INFO
+
+#### Syntax
+
+```
+TS.INFO <key>
+```
+
+Get information about a time series.
 
 see https://redis.io/docs/latest/commands/ts.info/
 
-**`TS.RANGE <key> fromTimestamp toTimestamp`**
+---
+### TS.RANGE
+
+#### Syntax
+
+```
+TS.RANGE <key> fromTimestamp toTimestamp [COUNT count] [FILTER_BY_TS ts...]
+```
 
 Query a range of data
 
 see https://redis.io/docs/latest/commands/ts.range/
 
-**`TS.REVRANGE <key> fromTimestamp toTimestamp`**
+---
+### TS.REVRANGE
+
+#### Syntax
+
+```
+TS.REVRANGE <key> fromTimestamp toTimestamp [COUNT count] [FILTER_BY_TS ts...]
+```
 
 Query a range of data in reverse order
 
 see https://redis.io/docs/latest/commands/ts.revrange/
 
-**`TS.MRANGE <key> fromTimestamp toTimestamp`**
+---
+### TS.MRANGE
+
+#### Syntax
+
+```
+TS.MRANGE <key> fromTimestamp toTimestamp [FILTER_BY_TS ts...] [FILTER_BY_VALUE min max] [COUNT count] [REDUCE operator]
+```
 
 Query a range of data across multiple series
 
 see https://redis.io/docs/latest/commands/ts.mrange/
 
-**`TS.MREVRANGE <key> fromTimestamp toTimestamp`**
+---
+### TS.MREVRANGE
+
+#### Syntax
+
+```
+TS.MREVRANGE <key> fromTimestamp toTimestamp [FILTER_BY_TS ts...] [FILTER_BY_VALUE min max] [COUNT count] [REDUCE operator]
+```
 
 Query a range of data across multiple series in the reverse order
 
 see https://redis.io/docs/latest/commands/ts.mrevrange/
 
-**`TS.QUERYINDEX filterExpression ...`**
+---
+### TS.QUERYINDEX filterExpression
+
+#### Syntax
+
+```
+TS.QUERYINDEX filterExpression
+```
 
 Returns the list of time series keys that match the filter expression(s).
+
 see https://redis.io/docs/latest/commands/ts.mrange/
 
+---
+### New Commands
 
 The following are NEW commands that are not included in RedisTimeSeries:
 
+---
+### TS.CARD
 
-**`TS.CARD FILTER filter... [START fromTimestamp] [END toTimestamp]`**
+#### Syntax
 
-returns the number of unique time series that match a given filter set. A time range can optionally be provided to
+```
+TS.CARD FILTER filter... [START fromTimestamp] [END toTimestamp]
+```
+
+Returns the number of unique time series that match a given filter set. A time range can optionally be provided to
 restrict the results to only series which have samples in the range `[fromTimestamp, toTimestamp]`.
 
 #### Required arguments
@@ -429,10 +516,16 @@ End timestamp, inclusive.
 
 [Integer number](https://redis.io/docs/reference/protocol-spec#resp-integers) of unique time series.
 
+---
+### TS.LABELNAMES
 
-**`TS.LABELNAMES FILTER selector... [START fromTimestamp] [END toTimestamp]`**
+#### Syntax
 
-returns a list of label names for select series. If a time range is specified, only labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`] are returned.
+```
+TS.LABELNAMES FILTER selector... [START fromTimestamp] [END toTimestamp]
+```
+
+Returns a list of label names for select series. If a time range is specified, only labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`] are returned.
 
 ### Required Arguments
 <code>fromTimestamp</code>
@@ -450,7 +543,7 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
-### Return
+#### Return
 
 An array of string label names.
 
@@ -462,10 +555,16 @@ An array of string label names.
 
 ```
 
+---
+### TS.LABELVALUES
 
-**`TS.LABELVALUES label [START fromTimestamp] [END toTimestamp]`**
+#### Syntax
 
-returns a list of label values for a provided label name. Optionally a time range can be specified to limit the result to only 
+```
+TS.LABELVALUES label [START fromTimestamp] [END toTimestamp]
+```
+
+Returns a list of label values for a provided label name. Optionally a time range can be specified to limit the result to only 
 labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`].
 
 #### Required Arguments
@@ -475,7 +574,7 @@ labels from series which have data in the date range [`fromTimestamp` .. `toTime
 The label name for which to retrieve mut values.
 
 
-### Optional Arguments
+#### Optional Arguments
 
 <code>fromTimestamp</code>
 
@@ -489,7 +588,7 @@ If specified along with `fromTimestamp`, this limits the result to only labels f
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
 
-### Return
+#### Return
 
 An array of string values.
 
@@ -513,11 +612,18 @@ TS.LABELVALUES region
 2) "us-west-2"
 ```
 
-**`TS.STATS <limit>`**
+---
+### TS.STATS
+
+#### Syntax
+
+```
+TS.STATS [limit=<number>]
+```
 
 Returns various cardinality statistics about the time series data.
 
-limit=<number>: Limit the number of returned items to a given number for each set of statistics. By default, 10 items are returned.
+`limit` - the number of returned items to a given number for each set of statistics. By default, 10 items are returned.
 
 ```
  1) totalSeries
@@ -546,8 +652,10 @@ limit=<number>: Limit the number of returned items to a given number for each se
        2) (integer) 425 
 ```
 
+---
 ### TS.JOIN
 
+#### Syntax
 
 ```
 TS.JOIN leftKey rightKey fromTimestamp toTimestamp
@@ -561,18 +669,15 @@ TS.JOIN leftKey rightKey fromTimestamp toTimestamp
 
 Join two time series on sample timestamps. Performs an INNER join by default.
 
-### Required arguments
+#### Required arguments
 
-<details open><summary><code>leftKey</code></summary>
-
+<summary><code>leftKey</code>
 is the key name for the time series being joined.
-</details>
+</summary>
 
-<details open><summary><code>rightKey</code></summary> 
-
+<summary><code>rightKey</code>
 is the key name for the right time series.
-
-</details>
+</summary>
 
 Both keys must have been created before `TS.JOIN` is called.
 
@@ -589,48 +694,44 @@ Both keys must have been created before `TS.JOIN` is called.
 </details>
 
 
-### Optional arguments
+#### Optional arguments
 
-<details open><summary><code>LEFT</code></summary>
+<summary><code>LEFT</code>
 A `LEFT` join outputs the matching samples between both tables. In case no samples match from the left series, it returns 
 those items with null values.
 
-</details>
+</summary>
 
-<details open><summary><code>RIGHT</code></summary>
+<summary><code>RIGHT</code>
 A `RIGHT` join outputs all samples in the right series. In case no samples match from the left series, it returns
 those items with null values.
 
-</details>
+</summary>
 
-<details open><summary><code>INNER</code></summary>
+<summary><code>INNER</code>
 Specifies an `INNER` join. A row is generated for samples with matching timestamps in the selected range.
+</summary>
 
-</details>
-
-<details open><summary><code>ANTI</code></summary>
+<summary><code>ANTI</code>
 An `ANTI` join returns samples for which no matching timestamp exists in the `right` series.
 
-</details>
+</summary>
 
-<details open><summary><code>SEMI</code></summary>
+<summary><code>SEMI</code>
 An `SEMI` join returns samples for which no corresponding timestamp exists in the `right` series. It does not return any 
 values from the right table.
 
 The main purpose is to filter the left series based on the existence of related records in the right table, not to
 combine data from both tables.
+</summary>
 
-</details>
-
-<details open><summary><code>FULL</code></summary>
-
+<summary><code>FULL</code>
 Specifies an FULL join. Returns samples from both left and right series. If no matching rows exist for the row in the left
 series, the value of the right series will have nulls. Correspondingly, the value of the left series will have nulls if
 there are no matching rows for the sample in the right series.
+</summary>
 
-</details>
-
-<details open><summary><code>ASOF [PREVIOUS | NEXT | NEAREST] tolerance [ALLOW_EXACT_MATCH [true|false]]</code></summary>
+<summary><code>ASOF [PREVIOUS | NEXT | NEAREST] tolerance [ALLOW_EXACT_MATCH [true|false]]</code>
 
 `ASOF` joins match each sample in the left series with the closest preceding or following sample in the right series based on
 timestamps. They are particularly useful for analyzing time-series data where records from different sources may not have
@@ -676,16 +777,14 @@ want to find the closest match within a reasonable time frame.
 
 It helps prevent incorrect matches that might occur if the nearest available data point is too far away in time or value.
 
-</details>
+</summary>
 
-<details open><summary><code>COUNT count</code></summary>
-
+<summary><code>COUNT count</code>
 the maximum number of samples to return.
 TODO: if used with aggregation, this specifies the number of returned buckets as opposed to the number of samples
+</summary>
 
-</details>
-
-<details open><summary><code>operator</code></summary> 
+<summary><code>operator</code>
 
 performs an operation on the value in each returned row.
 
@@ -717,16 +816,16 @@ performs an operation on the value in each returned row.
 | `or`         | return the first non-NaN item. If both are NaN, it returns NaN.         |
 | `unless`     | Returns Null unless `left` equals `right`                               |
 
-</details>
+</summary>
 
-### Return value
+#### Return value
 
 Returns one of these replies:
 
 - @simple-string-reply - `OK` if executed correctly
 - @error-reply on error (invalid arguments, wrong key type, etc.), when `sourceKey` does not exist, when `destKey` does not exist, when `sourceKey` is already a destination of a compaction rule, when `destKey` is already a source or a destination of a compaction rule, or when `sourceKey` and `destKey` are identical
 
-### Examples
+#### Examples
 
 <details open>
 <summary><b>Create a compaction rule</b></summary>
@@ -751,7 +850,7 @@ Next, run the join.
 
 </details>
 
-## Unsupported Commands
+### Unsupported Commands
 
 The following commands (from RedisTimeSeries) are not (currently) supported:
 
