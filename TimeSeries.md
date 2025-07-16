@@ -901,7 +901,6 @@ a keyspace event after the data is mutated. Commands include: TS.CREATE, TS.ADD,
  * ts.alter
  * ts.madd
  * ts.del
- 
 
 
 Users can subscribe to the time series events via the standard keyspace event pub/sub. For example,
@@ -912,10 +911,6 @@ Users can subscribe to the time series events via the standard keyspace event pu
 2. subsbcribe to keyspace & keyevent event channels:
     valkey-cli psubscribe '__key*__:*'
 ```
-
-### Info metrics
-
-We have a specific API (`TS.INFO`) that can be used to list information and stats on the timeseries.
 
 ## References
 * [valkey-timeseries GitHub Repo](https://github.com/ccollie/valkey-timeseries)
