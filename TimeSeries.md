@@ -381,7 +381,14 @@ see https://redis.io/docs/latest/commands/ts.mget/
 
 #### Syntax
 ```
-TS.INCRBY <key> delta
+TS.INCRBY key delta
+  [TIMESTAMP timestamp]
+  [RETENTION retentionPeriod]
+  [ENCODING <COMPRESSED|UNCOMPRESSED>]
+  [CHUNK_SIZE chunkSize]
+  [DUPLICATE_POLICY policy]
+  [DEDUPE_INTERVAL duplicateTimediff]
+  [[LABELS [label value ...] | METRIC metricName]
 ```
 increment the value of the last sample in a time series
 
@@ -390,7 +397,14 @@ increment the value of the last sample in a time series
 
 #### Syntax
 ```
-TS.DECRBY <key> delta
+TS.DECRBY key delta
+  [TIMESTAMP timestamp]
+  [RETENTION retentionPeriod]
+  [ENCODING <COMPRESSED|UNCOMPRESSED>]
+  [CHUNK_SIZE chunkSize]
+  [DUPLICATE_POLICY policy]
+  [DEDUPE_INTERVAL duplicateTimediff]
+  [[LABELS [label value ...] | METRIC metricName]
 ```
 
 Increment the value of the last sample in a time series
