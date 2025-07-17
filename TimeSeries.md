@@ -249,6 +249,19 @@ recent sample it is ignored. Default is `0`
 </summary>
 
 ---
+### TS.CREATERULE
+#### Syntax
+
+```
+TS.CREATERULE sourceKey destKey 
+    AGGREGATION aggregator bucketDuration
+    [alignTimestamp]
+```
+
+Create a compaction rule that aggregates data from `sourceKey` into `destKey` using the specified aggregation
+function and bucket duration.
+
+---
 ### TS.ALTER
 
 #### Syntax
@@ -344,6 +357,15 @@ TODO
 ```
 TS.DEL requests:status:200 587396550 1587396550
 ```
+---
+### TS.DELETERULE
+#### Syntax
+
+```
+TS.DELETERULE sourceKey destKey
+```
+Delete a compaction rule that aggregates data from `sourceKey` into `destKey`.
+
 ---
 
 ### TS.MADD
@@ -455,7 +477,14 @@ see https://redis.io/docs/latest/commands/ts.revrange/
 #### Syntax
 
 ```
-TS.MRANGE <key> fromTimestamp toTimestamp [FILTER_BY_TS ts...] [FILTER_BY_VALUE min max] [COUNT count] [REDUCE operator]
+TS.MRANGE fromTimestamp toTimestamp 
+    [FILTER_BY_TS ts...] 
+    [FILTER_BY_VALUE min max]
+    [COUNT count] 
+    [REDUCE operator]
+    [GROUPBY label REDUCE reducer]
+    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [WITHLABELS | <SELECTED_LABELS label...>]
 ```
 
 Query a range of data across multiple series
@@ -468,7 +497,14 @@ see https://redis.io/docs/latest/commands/ts.mrange/
 #### Syntax
 
 ```
-TS.MREVRANGE <key> fromTimestamp toTimestamp [FILTER_BY_TS ts...] [FILTER_BY_VALUE min max] [COUNT count] [REDUCE operator]
+TS.MREVRANGE fromTimestamp toTimestamp 
+    [FILTER_BY_TS ts...] 
+    [FILTER_BY_VALUE min max]
+    [COUNT count] 
+    [REDUCE operator]
+    [GROUPBY label REDUCE reducer]
+    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [WITHLABELS | <SELECTED_LABELS label...>]
 ```
 
 Query a range of data across multiple series in the reverse order
@@ -856,18 +892,6 @@ Next, run the join.
 127.0.0.1:6379> TS.JOIN temp:CDMX temp:TOR REDUCE min 
 ```
 
-
-
-### Unsupported Commands
-
-The following commands (from RedisTimeSeries) are not (currently) supported:
-
-**`TS.CREATERULE`**
-
-**`TS.DELETERULE`**
-
-
-These commands are scheduled for the second phase of development.
 
 ### Possible Future Enhancements
 
