@@ -378,7 +378,7 @@ see https://redis.io/docs/latest/commands/ts.madd/
 When compactions are supported, we should use `rust's` parallelism to perform the compactions in the background.
 
 ---
-**`TS.GET`**
+### TS.GET
 
 ```
 TS.GET <key> [LATEST]
@@ -451,7 +451,12 @@ see https://redis.io/docs/latest/commands/ts.info/
 #### Syntax
 
 ```
-TS.RANGE <key> fromTimestamp toTimestamp [COUNT count] [FILTER_BY_TS ts...]
+TS.RANGE key fromTimestamp toTimestamp 
+    [LATEST]
+    [FILTER_BY_TS ts...] 
+    [FILTER_BY_VALUE min max]
+    [COUNT count] 
+    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
 Query a range of data
@@ -464,7 +469,12 @@ see https://redis.io/docs/latest/commands/ts.range/
 #### Syntax
 
 ```
-TS.REVRANGE <key> fromTimestamp toTimestamp [COUNT count] [FILTER_BY_TS ts...]
+TS.REVRANGE key fromTimestamp toTimestamp 
+    [LATEST]
+    [FILTER_BY_TS ts...] 
+    [FILTER_BY_VALUE min max]
+    [COUNT count] 
+    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
 Query a range of data in reverse order
@@ -477,7 +487,8 @@ see https://redis.io/docs/latest/commands/ts.revrange/
 #### Syntax
 
 ```
-TS.MRANGE fromTimestamp toTimestamp 
+TS.MRANGE fromTimestamp toTimestamp
+    [LATEST
     [FILTER_BY_TS ts...] 
     [FILTER_BY_VALUE min max]
     [COUNT count] 
