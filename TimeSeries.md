@@ -449,7 +449,6 @@ see https://redis.io/docs/latest/commands/ts.info/
 ### TS.RANGE
 
 #### Syntax
-
 ```
 TS.RANGE key fromTimestamp toTimestamp 
     [LATEST]
@@ -906,10 +905,10 @@ Next, run the join.
 
 ### Possible Future Enhancements
 
-* Work is in progress to support PromQL as a query language, including transform, aggregation and rollup function support. A stretch goal is to support
-alerts and notifications based on the query results.
+* Work is in progress to support [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) as a query language, 
+including transform, aggregation and rollup function support. A stretch goal is to support alerts and notifications based on the query results.
 
-* We may support a tiered storage model where data is moved to a higher compression chunks (with higher access latency) after a certain period of time. 
+* We may support a tiered storage model where data is moved to higher compression chunks (with higher access latency) after a certain period of time. 
 
 * Use the [augurs](https://github.com/grafana/augurs) library to support more complex queries, like forecasting and anomaly detection.
 
@@ -918,7 +917,7 @@ alerts and notifications based on the query results.
 
 The default properties for TimeSeries can be controlled using configs. The values of the
 configs below are only used on a timeseries if the user does not specify the properties explicitly. Example: Using
-TS.INSERT or TS.RESERVE can override the default properties.
+TS.CREATE or TS.ADD can override the default properties.
 
 Supported Module configurations:
 1. _ts-retention-policy_: The default retention policy for time series (ms). Default to 0, which means no retention policy.
