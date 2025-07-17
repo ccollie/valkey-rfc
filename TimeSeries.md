@@ -48,7 +48,7 @@ We have the following terminologies:
 
 ### Enhancements over RedisTimeSeries
 * Explicit support for multiple databases, allowing users to create time series objects in different databases.
-* Joins: ValkeyTimeSeries will support joins between time series objects, including INNER, OUTER, and ASOF joins
+* Joins: ValkeyTimeSeries supports joins between time series objects, including INNER, OUTER, and ASOF joins
 * Filtering: support filtering using Prometheus style selectors
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
 * Rounding: support for rounding sample values to specified precision. This is enforced for all samples in a time series.
