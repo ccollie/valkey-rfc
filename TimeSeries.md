@@ -933,9 +933,9 @@ Supported Module configurations:
 
 ### ACL
 
-The ValkeyTimeSeries module will introduce a new ACL category - @timeseries.
+The ValkeyTimeSeries module will introduce a new ACL category - `@timeseries`.
 
-There are four existing ACL categories which are updated to include new TimeSeries commands: @read, @write, @fast, @slow.
+There are four existing ACL categories that are updated to include new TimeSeries commands: `@read`, `@write`, `@fast`, `@slow`.
 
 ### Keyspace Event Notification
 
