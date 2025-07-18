@@ -50,6 +50,7 @@ We have the following terminologies:
 * Explicit support for multiple databases, allowing users to create time series objects in different databases.
 * Joins: ValkeyTimeSeries supports joins between time series objects, including INNER, OUTER, and ASOF joins
 * Filtering: support filtering using Prometheus style selectors
+* Compaction: support for creating compaction rules based on other compactions.
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
 * Rounding: support for rounding sample values to specified precision. This is enforced for all samples in a time series.
 * Active expiration: support for active pruning of time series data based on retention.
