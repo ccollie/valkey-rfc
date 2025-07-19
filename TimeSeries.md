@@ -393,7 +393,10 @@ Get the last sample from a series.
 ### TS.MGET
 
 ```
-TS.MGET [LATEST] [WITHLABELS | <SELECTED_LABELS label...>] FILTER filterExpr...
+TS.MGET 
+    [LATEST] 
+    [WITHLABELS | <SELECTED_LABELS label...>] 
+    FILTER filterExpr...
 ```
 Get the last sample from a multiple series specified by a filter.
 see https://redis.io/docs/latest/commands/ts.mget/
