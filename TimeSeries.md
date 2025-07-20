@@ -50,7 +50,7 @@ We have the following terminologies:
 * Explicit support for multiple databases, allowing users to create time series objects in different databases.
 * Joins: ValkeyTimeSeries supports joins between time series objects, including INNER, OUTER, and ASOF joins
 * Filtering: support filtering using Prometheus style selectors
-* Compaction: support for creating compaction rules based on other compactions.
+* Compaction: support for creating compaction rules based on other compactions. In addition, default compactions (from config) can specify a filter expression to select which keys they are created for.
 * Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
 * Rounding: support for rounding sample values to specified precision. This is enforced for all samples in a time series.
 * Active expiration: support for active pruning of time series data based on retention.
@@ -228,7 +228,7 @@ Create a new time series. This command creates a new time series with the specif
 - **ENCODING**: The encoding to use for the timeseries. Default is `COMPRESSED`.
 - **DUPLICATE_POLICY**: The policy to use for duplicate samples. Default is `BLOCK`.
 
-### Required arguments
+#### Required arguments
 
 <summary><code>key</code>
 is key name for the time series.
@@ -557,7 +557,7 @@ restrict the results to only series which have samples in the range `[fromTimest
 
 #### Required arguments
 
-<code>filter</code>
+**`filter`**
 
 Repeated series selector argument that selects the series to return. At least one filter argument must be provided.
 
@@ -791,7 +791,7 @@ series, the value of the right series will have nulls. Correspondingly, the valu
 there are no matching rows for the sample in the right series.
 </summary>
 
-<summary><code>ASOF [PREVIOUS | NEXT | NEAREST] tolerance [ALLOW_EXACT_MATCH [true|false]]</code>
+<code>ASOF [PREVIOUS | NEXT | NEAREST] tolerance [ALLOW_EXACT_MATCH [true|false]]</code>
 
 `ASOF` joins match each sample in the left series with the closest preceding or following sample in the right series based on
 timestamps. They are particularly useful for analyzing time-series data where records from different sources may not have
@@ -837,14 +837,12 @@ want to find the closest match within a reasonable time frame.
 
 It helps prevent incorrect matches that might occur if the nearest available data point is too far away in time or value.
 
-</summary>
 
-<summary><code>COUNT count</code>
-the maximum number of samples to return.
-TODO: if used with aggregation, this specifies the number of returned buckets as opposed to the number of samples
-</summary>
+**`count`</code> the maximum number of samples to return.
 
-<summary><code>operator</code>
+If used with aggregation, this specifies the number of returned buckets as opposed to the number of samples
+
+**`operator`** 
 
 performs an operation on the value in each returned row.
 
@@ -876,14 +874,13 @@ performs an operation on the value in each returned row.
 | `or`         | return the first non-NaN item. If both are NaN, it returns NaN.         |
 | `unless`     | Returns Null unless `left` equals `right`                               |
 
-</summary>
-
 #### Return value
 
 Returns one of these replies:
 
 - @simple-string-reply - `OK` if executed correctly
-- @error-reply on error (invalid arguments, wrong key type, etc.), when `sourceKey` does not exist, when `destKey` does not exist, when `sourceKey` is already a destination of a compaction rule, when `destKey` is already a source or a destination of a compaction rule, or when `sourceKey` and `destKey` are identical
+- @error-reply on error (invalid arguments, wrong key type, etc.), when `sourceKey` does not exist, when `destKey` does not exist, 
+when `sourceKey` is already a destination of a compaction rule, when `destKey` is already a source or a destination of a compaction rule, or when `sourceKey` and `destKey` are identical
 
 #### Examples
 
@@ -924,16 +921,14 @@ configs below are only used on a timeseries if the user does not specify the pro
 TS.CREATE or TS.ADD can override the default properties.
 
 Supported Module configurations:
-1. _ts-retention-policy_: The default retention policy for time series (ms). Default to 0, which means no retention policy.
-2. _ts-duplicate-policy_: The default duplicate policy for time series. Default to "LAST", which means the last sample is kept when duplicates are added.
-3. _ts-chunk-size-bytes_: Controls the default chunk memory capacity. When create operations (Ts.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
-    will use the capacity specified by this config. 
-4. _ts-encoding_: Controls the default chunk encoding. Default to "COMPRESSED", which is the Gorilla XOR compression.
-5. _ts-ignore-max-time-diff_: Defines the max delta between timestamps to consider them a duplicate. Default to false.
-6. _ts-ignore-max-val-diff_: The maximum delta between values to consider them a duplicate.
-7. _ts-round-digits_: Controls the default number of digits to round input sample values to. Default to 255.
-8. _ts-significant_digits_: Controls the default number of significant digits to round input sample values to. Default to 255.
-
+1. **`ts-retention-policy`** : The default retention policy for time series (ms). Default to 0, which means no retention policy.
+2. **`ts-duplicate-policy`**: The default duplicate policy for time series. Default to "LAST", which means the last sample is kept when duplicates are added.
+3. **`ts-chunk-size-bytes`**: Controls the default chunk memory capacity. When create operations (TS.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
+    will use the capacity specified by this setting.
+4. **`ts-encoding`**: The default encoding for time series. Default to "COMPRESSED", which means the samples are compressed using Gorilla XOR compression.
+5. **`ts-ignore-max-time-diff`**: The distance in time between samples below which they are considered duplicated. Default to 0, which means no deduplication is performed.
+6. **`ts-ignore-max-val-diff`**: The value delta between samples below which they are considered duplicated.
+7. **`ts-compaction-policy`**: Compaction rules added by default to series created by TS.ADD, TS.INCRBY and TS.DECRBY. 
 
 ### ACL
 
@@ -947,12 +942,15 @@ Every timeseries-based write command (that involves mutation as explained in the
 a keyspace event after the data is mutated. Commands include: TS.CREATE, TS.ADD, TS.MADD.
 
 * Event type: VALKEYMODULE_NOTIFY_GENERIC
-* Event name: One of the two event names will be published based on the command & scenario:
+* Event name: One of the two event names will be published based on the command and scenario:
  * ts.add
- * ts.create
  * ts.alter
- * ts.madd
+ * ts.add:dest
+ * ts.create
+ * ts.createrule:dest
+ * ts.createrule:src
  * ts.del
+ * ts.madd
 
 
 Users can subscribe to the time series events via the standard keyspace event pub/sub. For example,
