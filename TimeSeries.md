@@ -895,6 +895,7 @@ performs an operation on the value in each returned row.
 | `sum`        | `left` + `right`                                                        |
 | `or`         | return the first non-NaN item. If both are NaN, it returns NaN.         |
 | `unless`     | Returns Null unless `left` equals `right`                               |
+| `xor`        | Returns 1 if `left` != `right`, otherwise returns 0                     |
 
 #### Return value
 
