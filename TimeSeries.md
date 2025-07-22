@@ -47,14 +47,36 @@ We have the following terminologies:
 * Chunk: A container for samples. Chunks have configurable size and encoding policies.
 
 ### Enhancements over RedisTimeSeries
-* Explicit support for multiple databases, allowing users to create time series objects in different databases.
-* Joins: ValkeyTimeSeries supports joins between time series objects, including INNER, OUTER, and ASOF joins
-* Filtering: support filtering using Prometheus style selectors
-* Compaction: support for creating compaction rules based on other compactions. In addition, default compactions (from config) can specify a filter expression to select which keys they are created for.
-* Metadata: support for returning metadata on time series objects (label names, label values, cardinality, etc)
-* Rounding: support for rounding sample values to specified precision. This is enforced for all samples in a time series.
-* Active expiration: support for active pruning of time series data based on retention.
-* Developer Ergonomics: support for relative timestamps in queries, e.g. `TS.RANGE key -6hrs -3hrs`, unit suffixes (e.g. `1s`, `3mb`, `20K`), 
+* `Multi-db Support` - allow users to create time series objects in different databases.
+* `Joins` - ValkeyTimeSeries supports joins between time series objects, including INNER, OUTER, and ASOF joins
+* `Filtering` - support filtering using Prometheus style selectors
+* `Compaction` - support for creating compaction rules based on other compactions.
+    ```redis
+    redis> TS.CREATE visitor:count:1m
+    OK
+    redis> TS.CREATE visitors:count:1h
+    OK
+    redis> TS.CREATE visitors:count:1d
+    OK
+    
+    redis> TS.CREATERULE visitor:count:1m visitors:count:1h AGGREGATION sum 1h
+    OK
+    redis> TS.CREATERULE visitors:count:1h visitors:count:1d AGGREGATION sum 1d
+    OK
+    ```
+    
+    In addition, default compactions can specify a filter expression to select which keys they are applied to.
+
+    ```redis
+    redis> CONFIG SET ts-compaction-policy avg:2h:10d|^metrics:memory:*;sum:60s:1h:5s|^metrics:cpu:*
+    OK
+    ```
+
+
+* `Metadata` - support for returning metadata on time series objects (label names, label values, cardinality, etc)
+* `Rounding` - support for rounding sample values to specified precision. This is enforced for all samples in a time series.
+* `Active Expiration` - support for active pruning of time series data based on retention.
+* `Developer Ergonomics` - support for relative timestamps in queries, e.g. `TS.RANGE key -6hrs -3hrs`, unit suffixes (e.g. `1s`, `3mb`, `20K`), 
     and a more expressive query language.
 
 ### Module OnLoad
@@ -921,14 +943,14 @@ configs below are only used on a timeseries if the user does not specify the pro
 TS.CREATE or TS.ADD can override the default properties.
 
 Supported Module configurations:
-1. **`ts-retention-policy`** : The default retention policy for time series (ms). Default to 0, which means no retention policy.
-2. **`ts-duplicate-policy`**: The default duplicate policy for time series. Default to "LAST", which means the last sample is kept when duplicates are added.
-3. **`ts-chunk-size-bytes`**: Controls the default chunk memory capacity. When create operations (TS.CREATE/TS.ADD/TS.INCRBY/TS.DECRBY) are used, the timeseries created
+- **`ts-retention-policy`** : The default retention policy for time series (ms). Default to `0`, which means no retention policy.
+- **`ts-duplicate-policy`**: The default duplicate policy for time series. Default to `LAST`, which means the last sample is kept when duplicates are added.
+- **`ts-chunk-size-bytes`**: Controls the default chunk memory capacity. When create operations (`TS.CREATE`/`TS.ADD`/`TS.INCRBY`/`TS.DECRBY`) are used, the timeseries created
     will use the capacity specified by this setting.
-4. **`ts-encoding`**: The default encoding for time series. Default to "COMPRESSED", which means the samples are compressed using Gorilla XOR compression.
-5. **`ts-ignore-max-time-diff`**: The distance in time between samples below which they are considered duplicated. Default to 0, which means no deduplication is performed.
-6. **`ts-ignore-max-val-diff`**: The value delta between samples below which they are considered duplicated.
-7. **`ts-compaction-policy`**: Compaction rules added by default to series created by TS.ADD, TS.INCRBY and TS.DECRBY. 
+- **`ts-encoding`**: The default encoding for time series. Default to `COMPRESSED`, which means the samples are compressed using Gorilla XOR compression.
+- **`ts-ignore-max-time-diff`**: The distance in time between samples below which they are considered duplicated. Default to 0, which means no deduplication is performed.
+- **`ts-ignore-max-val-diff`**: The value delta between samples below which they are considered duplicated.
+- **`ts-compaction-policy`**: Compaction rules added by default to series created by `TS.ADD`, `TS.INCRBY` and `TS.DECRBY`. 
 
 ### ACL
 
