@@ -397,8 +397,8 @@ Delete a compaction rule that aggregates data from `sourceKey` into `destKey`.
 ```
 TS.MADD <key> <item> [<item> ...]
 ```
-see https://redis.io/docs/latest/commands/ts.madd/
-When compactions are supported, we should use `rust's` parallelism to perform the compactions in the background.
+Add multiple samples to a time series. If the key does not exist, it is created with the specified timestamp and value.
+
 
 ---
 ### TS.GET
@@ -407,9 +407,8 @@ When compactions are supported, we should use `rust's` parallelism to perform th
 TS.GET <key> [LATEST]
 ```
 
-see https://redis.io/docs/latest/commands/ts.get/
-
-Get the last sample from a series.
+Get the last sample from a series. If `LATEST` is specified, it returns the value of the latest unclosed bucket if the series
+is a compaction.
 
 ---
 ### TS.MGET
@@ -421,7 +420,10 @@ TS.MGET
     FILTER filterExpr...
 ```
 Get the last sample from a multiple series specified by a filter.
-see https://redis.io/docs/latest/commands/ts.mget/
+
+#### Required Arguments
+<summary><code>filterExpr</code>
+is a filter expression that selects the series to return. At least one filter argument must be provided.
 
 ---
 
@@ -455,8 +457,16 @@ TS.DECRBY key delta
   [[LABELS [label value ...] | METRIC metricName]
 ```
 
-Increment the value of the last sample in a time series
-see https://redis.io/docs/latest/commands/ts.decrby/
+Decrement the value of the last sample in a time series. If the key does not exist, it is created with the specified 
+timestamp and value.
+
+#### Required Arguments
+<summary><code>key</code>
+is key name for the time series.
+</summary>
+<summary><code>delta</code>
+the value to decrement the last sample by (double)
+</summary>
 
 ---
 ### TS.INFO
@@ -468,8 +478,6 @@ TS.INFO <key>
 ```
 
 Get information about a time series.
-
-see https://redis.io/docs/latest/commands/ts.info/
 
 ---
 ### TS.RANGE
@@ -484,9 +492,7 @@ TS.RANGE key fromTimestamp toTimestamp
     [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
-Query a range of data
-
-see https://redis.io/docs/latest/commands/ts.range/
+Query a range of data, optionally with filtering and aggregation.
 
 ---
 ### TS.REVRANGE
@@ -502,9 +508,7 @@ TS.REVRANGE key fromTimestamp toTimestamp
     [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
-Query a range of data in reverse order
-
-see https://redis.io/docs/latest/commands/ts.revrange/
+Query a range of data in reverse order, optionally with filtering and aggregation.
 
 ---
 ### TS.MRANGE
@@ -525,8 +529,6 @@ TS.MRANGE fromTimestamp toTimestamp
 
 Query a range of data across multiple series
 
-see https://redis.io/docs/latest/commands/ts.mrange/
-
 ---
 ### TS.MREVRANGE
 
@@ -545,8 +547,6 @@ TS.MREVRANGE fromTimestamp toTimestamp
 
 Query a range of data across multiple series in the reverse order
 
-see https://redis.io/docs/latest/commands/ts.mrevrange/
-
 ---
 ### TS.QUERYINDEX filterExpression
 
@@ -558,7 +558,9 @@ TS.QUERYINDEX filterExpression
 
 Returns the list of time series keys that match the filter expression(s).
 
-see https://redis.io/docs/latest/commands/ts.mrange/
+#### Required Arguments
+<summary><code>filterExpression</code>
+is a filter expression that selects the series to return. At least one filter argument must be provided.
 
 ---
 ### New Commands
@@ -595,7 +597,7 @@ End timestamp, inclusive.
 
 #### Return
 
-[Integer number](https://redis.io/docs/reference/protocol-spec#resp-integers) of unique time series.
+Integer number of unique time series.
 
 ---
 ### TS.LABELNAMES
