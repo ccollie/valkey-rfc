@@ -86,7 +86,7 @@ timeseries specific configurations, and the TimeSeries ACL category.
 
 * Module name: ts
 * Data type name: `vktseries`
-* Module shared object file name: valkey_timeseries.so
+* Module shared object file name: `libvalkey_timeseries.[so|dylib|dll]`
 
 With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeseries in its Module name which is accessible by clients
 through HELLO, MODULE LIST, and INFO commands. Also, metrics and configs will be prefixed with this name (by design for Modules).
@@ -125,8 +125,7 @@ Because of this, it is not possible to be RDB compatible with RedisTimeSeries.
 ### AOF Rewrite handling
 
 Module data types (including timeseries) can implement a callback function that will be triggered for TimeSeries objects to rewrite
-its data as command/s. From the AOF callback, we will handle AOF rewrite by saving a TS.LOAD command with the key, TTL, and
-serialized value of the corresponding time series object.
+its data as command/s. From the AOF callback, we will handle AOF rewrite by using `DUMP` and `RESTORE`.
 
 ### Migrating workloads from RedisTimeSeries:
 
