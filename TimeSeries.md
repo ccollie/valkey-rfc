@@ -572,7 +572,7 @@ The following are NEW commands that are not included in RedisTimeSeries:
 #### Syntax
 
 ```
-TS.CARD FILTER filter... [START fromTimestamp] [END toTimestamp]
+TS.CARD [START fromTimestamp] [END toTimestamp] FILTER filter...
 ```
 
 Returns the number of unique time series that match a given filter set. A time range can optionally be provided to
@@ -604,7 +604,7 @@ Integer number of unique time series.
 #### Syntax
 
 ```
-TS.LABELNAMES FILTER selector... [START fromTimestamp] [END toTimestamp]
+TS.LABELNAMES [START fromTimestamp] [END toTimestamp] LIMIT limit FILTER selector...
 ```
 
 Returns a list of label names for select series. If a time range is specified, only labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`] are returned.
@@ -625,11 +625,15 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
+<code>limit</code>
+
+The maximum number of label names to return. If not specified, all names are returned.
+
 #### Return
 
 An array of string label names.
 
-**`TS.LABELNAMES FILTER up process_start_time_seconds{job="prometheus"}`**
+**`TS.LABELNAMES LIMIT limit FILTER up process_start_time_seconds{job="prometheus"}`**
 ```
 1) "__name__",
 2) "instance",
@@ -643,13 +647,17 @@ An array of string label names.
 #### Syntax
 
 ```
-TS.LABELVALUES label [START fromTimestamp] [END toTimestamp]
+TS.LABELVALUES label [START fromTimestamp] [END toTimestamp] LIMIT limit FILTER selector...
 ```
 
 Returns a list of label values for a provided label name. Optionally a time range can be specified to limit the result to only 
 labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`].
 
 #### Required Arguments
+
+**`filter`**
+
+Repeated series selector argument that selects the series to return. At least one filter argument must be provided.
 
 <code>label</code>
 
@@ -668,6 +676,10 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
+
+<code>limit</code>
+
+The maximum number of label values to return. If not specified, all values are returned.
 
 
 #### Return
