@@ -411,7 +411,7 @@ is a compaction.
 
 ---
 ### TS.MGET
-
+Prop#### Syntax
 ```
 TS.MGET 
     [LATEST] 
@@ -423,7 +423,7 @@ Get the last sample from a multiple series specified by a filter.
 #### Required Arguments
 <summary><code>filterExpr</code>
 is a filter expression that selects the series to return. At least one filter argument must be provided.
-
+</summary>
 ---
 
 ### TS.INCRBY
@@ -471,7 +471,6 @@ the value to decrement the last sample by (double)
 ### TS.INFO
 
 #### Syntax
-
 ```
 TS.INFO <key>
 ```
@@ -530,9 +529,7 @@ Query a range of data across multiple series
 
 ---
 ### TS.MREVRANGE
-
 #### Syntax
-
 ```
 TS.MREVRANGE fromTimestamp toTimestamp 
     [FILTER_BY_TS ts...] 
@@ -547,19 +544,20 @@ TS.MREVRANGE fromTimestamp toTimestamp
 Query a range of data across multiple series in the reverse order
 
 ---
-### TS.QUERYINDEX filterExpression
+### TS.QUERYINDEX
 
 #### Syntax
 
 ```
-TS.QUERYINDEX filterExpression
+TS.QUERYINDEX filterExpression ...
 ```
 
 Returns the list of time series keys that match the filter expression(s).
 
 #### Required Arguments
 <summary><code>filterExpression</code>
-is a filter expression that selects the series to return. At least one filter argument must be provided.
+is a filter expression that selects the series to return based on label filters. At least one filter argument must be provided.
+</summary>
 
 ---
 ### New Commands
