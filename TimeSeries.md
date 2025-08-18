@@ -992,7 +992,7 @@ Users can subscribe to the time series events via the standard keyspace event pu
 ```text
 1. enable keyspace event notifications:
     valkey-cli config set notify-keyspace-events KEA
-2. subsbcribe to keyspace & keyevent event channels:
+2. subscribe to keyspace & keyevent event channels:
     valkey-cli psubscribe '__key*__:*'
 ```
 
