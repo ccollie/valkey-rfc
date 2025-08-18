@@ -7,7 +7,7 @@ Status: Proposed
 
 ## Abstract
 
-The proposed feature is ValkeyTimeSeries which is a [Rust](https://www.rust-lang.org/) based Module that brings a native time series data type to Valkey.
+The proposed feature is ValkeyTimeSeries, which is a [Rust](https://www.rust-lang.org/) based Module that brings a native time series data type to Valkey.
 
 To help users migrate from Redis and RedisTimeSeries, as well as capitalize on existing OSS RedisTimeSeries client libraries, 
 the module is designed to be API-compatible with Redis Ltd.’s RedisTimeSeries.
@@ -88,7 +88,7 @@ timeseries specific configurations, and the TimeSeries ACL category.
 * Data type name: `vktseries`
 * Module shared object file name: `libvalkey_timeseries.[so|dylib|dll]`
 
-With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeseries in its Module name which is accessible by clients
+With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeseries in its Module name, which is accessible by clients
 through HELLO, MODULE LIST, and INFO commands. Also, metrics and configs will be prefixed with this name (by design for Modules).
 
 Regarding the Module Data type name, because ValkeyTimeSeries's Module Data type (the current version) is not compatible with
@@ -136,7 +136,7 @@ Re-populate the time series objects by inserting items by moving the existing sa
 (with ValkeyTimeSeries loaded). The workload can be moved without any errors since we are API Compatible.
 
 Pros
-* This is the simplest option in terms of effort - assuming the user is fine with recreating time series objects and adding
+* This is the simplest option in terms of effort—assuming the user is fine with recreating time series objects and adding
     items on the Valkey server (with ValkeyTimeSeries).
 
 Cons
@@ -609,7 +609,7 @@ Returns a list of label names for select series. If a time range is specified, o
 
 ### Required Arguments
 <code>fromTimestamp</code>
-Repeated series selector argument that selects the series to return. At least one selector argument must be provided..
+Repeated series selector argument that selects the series to return. At least one selector argument must be provided.
 
 
 ### Optional Arguments
