@@ -634,7 +634,9 @@ The maximum number of label names to return. If not specified, all names are ret
 
 An array of string label names.
 
-**`TS.LABELNAMES LIMIT 10 FILTER up process_start_time_seconds{job="prometheus"}`**
+```
+TS.LABELNAMES LIMIT 10 FILTER up process_start_time_seconds{job="prometheus"}
+```
 ```
 1) "__name__",
 2) "instance",
