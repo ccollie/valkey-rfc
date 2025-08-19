@@ -602,7 +602,10 @@ Integer number of unique time series.
 #### Syntax
 
 ```
-TS.LABELNAMES [START fromTimestamp] [END toTimestamp] LIMIT limit FILTER selector...
+TS.LABELNAMES 
+    [FILTER_BY_RANGE fromTimestamp toTimestamp]
+    [LIMIT limit] 
+    FILTER selector...
 ```
 
 Returns a list of label names for select series. If a time range is specified, only labels from series which have data in the date range [`fromTimestamp` .. `toTimestamp`] are returned.
@@ -631,7 +634,7 @@ The maximum number of label names to return. If not specified, all names are ret
 
 An array of string label names.
 
-**`TS.LABELNAMES LIMIT limit FILTER up process_start_time_seconds{job="prometheus"}`**
+**`TS.LABELNAMES LIMIT 10 FILTER up process_start_time_seconds{job="prometheus"}`**
 ```
 1) "__name__",
 2) "instance",
@@ -645,7 +648,10 @@ An array of string label names.
 #### Syntax
 
 ```
-TS.LABELVALUES label [START fromTimestamp] [END toTimestamp] LIMIT limit FILTER selector...
+TS.LABELVALUES label 
+    [FILTER_BY_RANGE fromTimestamp toTimestamp]
+    [LIMIT limit] 
+    FILTER selector...
 ```
 
 Returns a list of label values for a provided label name. Optionally a time range can be specified to limit the result to only 
@@ -693,15 +699,15 @@ Return an error reply in the following cases:
 
 #### Examples
 
-This example queries for all label values for the "`region`" label:
+This example queries for the regions collecting p95 latency metrics for the billing service:
 ```
-TS.LABELVALUES region
+TS.LABELVALUES region FILTER api_latency_p95{service="billing"}
 ```
-```
+```bash
 1) "us-east-1",
 2) "us-east-2"
-1) "us-west-1",
-2) "us-west-2"
+3) "us-west-1",
+4) "us-west-2"
 ```
 
 ---
@@ -870,8 +876,7 @@ want to find the closest match within a reasonable time frame.
 
 It helps prevent incorrect matches that might occur if the nearest available data point is too far away in time or value.
 
-
-**`count`</code> the maximum number of samples to return.
+<code>`count`</code> the maximum number of samples to return.
 
 If used with aggregation, this specifies the number of returned buckets as opposed to the number of samples
 
