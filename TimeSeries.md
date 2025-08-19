@@ -718,7 +718,7 @@ TS.LABELVALUES region FILTER api_latency_p95{service="billing"}
 #### Syntax
 
 ```
-TS.STATS [limit limit]
+TS.STATS [LIMIT limit]
 ```
 
 Returns various cardinality statistics about the time series data.
