@@ -26,7 +26,7 @@ Valkey TimeSeries aims to enable the unique characteristics of time-series data:
 Although Valkey time series modeling can be achieved natively in ValKey using built-in types like `stream`s and `zset`s,
 a dedicated time series data type can provide better performance, memory efficiency, and ease of use for time series workloads.
 
-Redis Ltd.‘s TimeSeries module is published under a proprietary license, hence cannot be distributed freely with ValKey.
+Redis‘ TimeSeries module is published under a proprietary license, hence cannot be distributed freely with ValKey.
 
 ## Design Considerations
 
@@ -51,7 +51,7 @@ We have the following terminologies:
 * `Joins` - ValkeyTimeSeries supports joins between time series objects, including INNER, OUTER, and ASOF joins
 * `Filtering` - support filtering using Prometheus style selectors
 * `Compaction` - support for creating compaction rules based on other compactions.
-    ```redis
+    ```bash
     redis> TS.CREATE visitor:count:1m
     OK
     redis> TS.CREATE visitors:count:1h
@@ -67,7 +67,7 @@ We have the following terminologies:
     
     In addition, default compactions can specify a filter expression to select which keys they are applied to.
 
-    ```redis
+    ```bash
     redis> CONFIG SET ts-compaction-policy avg:2h:10d|^metrics:memory:*;sum:60s:1h:5s|^metrics:cpu:*
     OK
     ```
@@ -570,7 +570,7 @@ The following are NEW commands that are not included in RedisTimeSeries:
 #### Syntax
 
 ```
-TS.CARD [START fromTimestamp] [END toTimestamp] FILTER filter...
+TS.CARD [FILTER_BY_RANGE fromTimestamp toTimestamp] FILTER filter...
 ```
 
 Returns the number of unique time series that match a given filter set. A time range can optionally be provided to
