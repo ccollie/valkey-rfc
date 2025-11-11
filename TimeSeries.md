@@ -970,6 +970,7 @@ Supported Module configurations:
 - **`ts-ignore-max-time-diff`**: The distance in time between samples below which they are considered duplicated. Default to 0, which means no deduplication is performed.
 - **`ts-ignore-max-val-diff`**: The value delta between samples below which they are considered duplicated.
 - **`ts-compaction-policy`**: Compaction rules added by default to series created by `TS.ADD`, `TS.INCRBY` and `TS.DECRBY`. 
+- **`ts-cluster-map-expiration-ms`**: The cluster map expiration time.
 
 ### ACL
 
