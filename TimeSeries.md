@@ -705,7 +705,7 @@ This example queries for the regions collecting p95 latency metrics for the bill
 ```
 TS.LABELVALUES region FILTER api_latency_p95{service="billing"}
 ```
-```bash
+```
 1) "us-east-1",
 2) "us-east-2"
 3) "us-west-1",
@@ -943,6 +943,10 @@ Next, run the join.
 ```
 127.0.0.1:6379> TS.JOIN temp:CDMX temp:TOR REDUCE min 
 ```
+---
+### Unsupported Features
+
+We do not currently support the TWA (Time-Weighted Average) aggregation function.
 
 
 ### Possible Future Enhancements
