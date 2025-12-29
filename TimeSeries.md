@@ -815,11 +815,10 @@ Specifies an `INNER` join. A row is generated for samples with matching timestam
 
 <summary><code>ANTI</code>
 An `ANTI` join returns samples for which no matching timestamp exists in the `right` series.
-
 </summary>
 
 <summary><code>SEMI</code>
-An `SEMI` join returns samples for which no corresponding timestamp exists in the `right` series. It does not return any 
+A `SEMI` join returns samples for which no corresponding timestamp exists in the `right` series. It does not return any 
 values from the right table.
 
 The main purpose is to filter the left series based on the existence of related records in the right table, not to
@@ -832,11 +831,11 @@ series, the value of the right series will have nulls. Correspondingly, the valu
 there are no matching rows for the sample in the right series.
 </summary>
 
-<code>ASOF [PREVIOUS | NEXT | NEAREST] tolerance [ALLOW_EXACT_MATCH [true|false]]</code>
-
-`ASOF` joins match each sample in the left series with the closest preceding or following sample in the right series based on
+<summary><code>ASOF</code>
+ASOF joins match each sample in the left series with the closest preceding or following sample in the right series based on
 timestamps. They are particularly useful for analyzing time-series data where records from different sources may not have
 perfectly aligned timestamps. ASOF joins solve the problem of finding the value of a varying property at a specific point in time.
+</summary>
 
 #### How It Works
 For each sample in the left table, the join finds the closest matching value from the right table.
