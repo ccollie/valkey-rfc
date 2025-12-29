@@ -401,7 +401,7 @@ Add multiple samples to a time series. If the key does not exist, it is created 
 
 ---
 ### TS.GET
-
+#### Syntax
 ```
 TS.GET <key> [LATEST]
 ```
@@ -411,7 +411,7 @@ is a compaction.
 
 ---
 ### TS.MGET
-Prop#### Syntax
+#### Syntax
 ```
 TS.MGET 
     [LATEST] 
@@ -944,6 +944,11 @@ Next, run the join.
 127.0.0.1:6379> TS.JOIN temp:CDMX temp:TOR REDUCE min 
 ```
 ---
+### Differences from RedisTimeSeries
+
+* Our command parser is more lenient than RedisTimeSeries. For example, the order of optional arguments does not matter for 
+  commands like TS.CREATE and TS.ALTER when not specifying variadic arguments like LABELS.
+
 ### Unsupported Features
 
 We do not currently support the TWA (Time-Weighted Average) aggregation function.
