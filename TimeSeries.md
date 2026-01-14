@@ -31,7 +31,7 @@ Redis‘ TimeSeries module is published under a proprietary license, hence canno
 ## Design Considerations
 
 The ValkeyTimeSeries module brings a time series module data type to Valkey and provides commands to create 
-time series, operate on them (add sample, query, perform aggregations, compactions, downsampling and joins, etc.).
+time series, operate on them (add sample, query, perform aggregations, compactions, downsampling, and joins, etc.).
 It allows customization of the properties of each series (compression, retention, compactions, etc.) through commands and 
 configurations. 
 
@@ -162,7 +162,7 @@ The timeseries data type also supports memory management related callbacks:
 * free_effort: Determine whether the TimeSeries object's memory needs to be lazily reclaimed or synchronously freed.
 
 ### Replication
-Every TimeSeries based write operation (creation, adding and removing samples) will be replicated to replica nodes.
+Every TimeSeries-based write operation (creation, adding, and removing samples) will be replicated to replica nodes.
 
 ## Specification
 
@@ -183,7 +183,7 @@ Chunks can also be configured to store values as Uncompressed, but this is provi
 
 ### TimeSeries Indexing
 In addition to labels, a time series is uniquely identified by an opaque unsigned 64bit int. Each label-value pair
-is mapped to the id of each series which contains that attribute. The mapping is implemented as an [Adaptive Radix Tree (ART)](https://db.in.tum.de/~leis/papers/ART.pdf) (pdf), 
+is mapped to the id of each series that contains that attribute. The mapping is implemented as an [Adaptive Radix Tree (ART)](https://db.in.tum.de/~leis/papers/ART.pdf) (pdf), 
 where each node is a 64bit [Roaring BitMap](https://roaringbitmap.org/about/).
 
 The ART allows for efficient lookups and insertions, while the Roaring BitMap performs fast set operations on the series ids.
@@ -731,7 +731,7 @@ TS.STATS LIMIT 5
 ```
 
 ```
- 1) totalSeries
+ 1) numSeries
  2) (integer) 508
  3) seriesCountByMetricName
     1) 1) "net_conntrack_dialer_conn_failed_total"
@@ -756,6 +756,13 @@ TS.STATS LIMIT 5
     2) 1) "instance=localhost:9090"      
        2) (integer) 425 
 ```
+The fields returned are:
+  * **numSeries**: total number of time series.
+  * **numLabelPairs**: total number of unique label value pairs.
+  * **seriesCountByMetricName**: metrics names and the count of the series with that name.
+  * **labelValueCountByLabelName**: label names and their value count.
+  * **memoryInBytesByLabelName**: the label names and memory used in bytes. Memory usage is calculated by adding the length of all values for a given label name.
+  * **seriesCountByLabelPair**: label value pairs and their series count.
 
 ---
 ### TS.JOIN
@@ -947,6 +954,12 @@ Next, run the join.
 
 * Our command parser is more lenient than RedisTimeSeries. For example, the order of optional arguments does not matter for 
   commands like TS.CREATE and TS.ALTER when not specifying variadic arguments like LABELS.
+* We support Prometheus style selectors in TS.QUERYINDEX, TS.MGET, TS.MRANGE, and TS.MREVRANGE.
+* We support new index metadata commands: TS.CARD, TS.LABELNAMES, TS.LABELVALUES, TS.STATS.
+* Additional aggregation functions are supported: 
+  * `INCREASE` - calculates the total increase in value of a counter over a specified time duration
+  * `RATE` - determines the average per-second growth rate of a counter across a given time frame.
+* We support a new TS.JOIN command to join two time series on sample timestamps.
 
 ### Unsupported Features
 
@@ -956,11 +969,11 @@ We do not currently support the TWA (Time-Weighted Average) aggregation function
 ### Possible Future Enhancements
 
 * Work is in progress to support [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) as a query language, 
-including transform, aggregation and rollup function support. A stretch goal is to support alerts and notifications based on the query results.
+including transform, aggregation, and rollup function support. A stretch goal is to support alerts and notifications based on the query results.
 
 * We may support a tiered storage model where data is moved to higher compression chunks (with higher access latency) after a certain period of time. 
 
-* Use the [augurs](https://github.com/grafana/augurs) library to support more complex queries, like forecasting and anomaly detection.
+* Support more complex analysis, like forecasting and anomaly detection.
 
 
 ### Configurations
