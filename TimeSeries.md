@@ -564,6 +564,98 @@ is a filter expression that selects the series to return based on label filters.
 
 The following are NEW commands that are not included in RedisTimeSeries:
 
+
+---
+### TS.MDEL
+
+#### Syntax
+
+```
+TS.MDEL [fromTimestamp toTimestamp] FILTER selector...
+TS.MDEL FILTER selector...
+```
+
+Delete samples in a timestamp range, or delete entire time series, for all series matching a label filter, possibly
+across a cluster.
+
+#### Summary
+
+Two modes:
+
+- **Range deletion**: `TS.MDEL fromTimestamp toTimestamp FILTER ...`  
+  Removes samples in the inclusive range [`fromTimestamp`, `toTimestamp`] from every matching series.
+
+- **Series deletion**: `TS.MDEL FILTER ...`  
+  Removes entire time series keys matching the filter.
+
+#### Required arguments
+
+<summary><code>FILTER</code>
+
+One or more series selectors used to match series (for example, <code>env=prod</code>).
+</summary>
+
+#### Optional arguments
+
+<summary><code>fromTimestamp</code>
+Start of the inclusive timestamp range. Required for range deletion.
+</summary>
+
+<summary><code>toTimestamp</code>
+End of the inclusive timestamp range. Required for range deletion.
+</summary>
+
+#### Return
+
+Integer reply:
+
+- In range deletion mode: the total number of samples deleted across all matched series.
+- In series deletion mode: number of series (keys) deleted.
+
+#### Notifications and replication
+
+- Range deletions emit `ts.del` events for affected keys (module notification).
+- Series deletions emit `del` events for removed keys.
+
+#### Permissions and ACLs
+
+The module enforces DELETE permission on matching keys. Clients must have permission to delete the 
+matching series or global delete permission.
+
+#### Errors
+
+- keyword or selectors missing.
+— timestamp parse error.
+
+Per-key delete failures are logged and do not stop processing other keys; overall command returns the count of successful deletions.
+
+#### Behavior notes
+
+- Range deletion removes samples in the inclusive range [`fromTimestamp`, `toTimestamp`].
+- The command enforces retention rules.
+- Series deletion removes the whole key/value for each matching series.
+- Compaction is run after removals as appropriate.
+
+#### Examples
+
+Delete samples between `1609459200000` and `1609545600000` from series with label `env=prod`:
+
+```
+TS.MDEL 1609459200000 1609545600000 FILTER env=prod
+```
+
+Delete one week of samples from all series tracking 500 errors for the payment service:
+
+```
+TS.MDEL -8d -1d FILTER http_errors{service=payment,status=500}
+```
+
+Delete all auth service latency related series in the `us-east` region in staging environment:
+
+```
+TS.MDEL FILTER api_latency{service=auth,region~="us-east-?",env=staging}
+```
+
 ---
 ### TS.CARD
 
