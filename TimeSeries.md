@@ -549,7 +549,7 @@ Query a range of data across multiple series in the reverse order
 #### Syntax
 
 ```
-TS.QUERYINDEX filterExpression ...
+TS.QUERYINDEX [FILTER_BY_RANGE [NOT] fromTimestamp toTimestamp] filterExpression ...
 ```
 
 Returns the list of time series keys that match the filter expression(s).
@@ -558,6 +558,18 @@ Returns the list of time series keys that match the filter expression(s).
 <summary><code>filterExpression</code>
 is a filter expression that selects the series to return based on label filters. At least one filter argument must be provided.
 </summary>
+
+#### Optional Arguments
+<code>fromTimestamp</code>
+
+Start timestamp, inclusive. Results will only be returned for series which have samples in the range `[fromTimestamp, toTimestamp]`
+
+<code>toTimestamp</code>
+
+End timestamp, inclusive.
+
+If **`NOT`** is specified before `fromTimestamp` and `toTimestamp`, the result will include only the keys of series which 
+do *NOT* have samples in the specified range.
 
 ---
 ### New Commands
@@ -662,7 +674,7 @@ TS.MDEL FILTER api_latency{service=auth,region~="us-east-?",env=staging}
 #### Syntax
 
 ```
-TS.CARD [FILTER_BY_RANGE fromTimestamp toTimestamp] FILTER filter...
+TS.CARD [FILTER_BY_RANGE [NOT] fromTimestamp toTimestamp] FILTER filter...
 ```
 
 Returns the number of unique time series that match a given filter set. A time range can optionally be provided to
@@ -683,6 +695,8 @@ Start timestamp, inclusive. Results will only be returned for series which have 
 
 End timestamp, inclusive.
 
+If **`NOT`** is specified before `fromTimestamp` and `toTimestamp`, the result will include only series which do *NOT* have 
+samples in the specified range.
 
 #### Return
 
@@ -695,7 +709,7 @@ Integer number of unique time series.
 
 ```
 TS.LABELNAMES 
-    [FILTER_BY_RANGE fromTimestamp toTimestamp]
+    [FILTER_BY_RANGE [NOT] fromTimestamp toTimestamp]
     [LIMIT limit] 
     FILTER selector...
 ```
@@ -717,6 +731,9 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
+
+If **`NOT`** is specified before `fromTimestamp` and `toTimestamp`, the result will include only series which do *NOT* have
+samples in the specified range.
 
 <code>limit</code>
 
@@ -743,7 +760,7 @@ TS.LABELNAMES LIMIT 10 FILTER up process_start_time_seconds{job="prometheus"}
 
 ```
 TS.LABELVALUES label 
-    [FILTER_BY_RANGE fromTimestamp toTimestamp]
+    [FILTER_BY_RANGE [NOT] fromTimestamp toTimestamp]
     [LIMIT limit] 
     FILTER selector...
 ```
@@ -774,6 +791,9 @@ have data in the date range [`fromTimestamp` .. `toTimestamp`]
 
 If specified along with `fromTimestamp`, this limits the result to only labels from series which
 have data in the date range [`fromTimestamp` .. `toTimestamp`]
+
+If **`NOT`** is specified before `fromTimestamp` and `toTimestamp`, the result will include only series which do *NOT* have
+samples in the specified range.
 
 <code>limit</code>
 
