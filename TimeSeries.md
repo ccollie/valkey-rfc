@@ -963,9 +963,13 @@ timestamps. They are particularly useful for analyzing time-series data where re
 perfectly aligned timestamps. ASOF joins solve the problem of finding the value of a varying property at a specific point in time.
 </summary>
 
-#### How It Works
-For each sample in the left table, the join finds the closest matching value from the right table.
-- `PREVIOUS` selects the last row in the right series whose timeseries is less than or equal to the left’s timestamp.
+#### How ASOF Joins Work
+
+When using `ASOF` joins, the join operation looks for the closest matching timestamp in the right series for each
+timestamp in the left series, based on the specified `direction` and `tolerance`.
+
+`direction` specifies how to find the closest match:
+- `PREVIOUS` (default) selects the last row in the right series whose timeseries is less than or equal to the left’s timestamp.
 - `NEXT` (default) selects the first row in the right series whose timestamp is greater than or equal to the left’s timestamp.
 - `NEAREST` selects the last row in the right series whose timestamp is nearest to the left’s timestamp.
 
@@ -976,20 +980,15 @@ The tolerance can be specified as:
 
 `ALLOW_EXACT_MATCH` is a boolean flag that determines whether to allow exact matches between the left and right series.
 
-
 If not specified, there is no tolerance limit (equivalent to an infinite tolerance). When set, JOIN ASOF will only match
 keys within the specified tolerance range. Any potential matches outside this range will be treated as no match.
-
-The tolerance works in conjunction with the 'direction' parameter.
-- For example, with strategy = `PREVIOUS` (the default), it looks for the nearest timestamp within the tolerance range that is less
-  than or equal to the timestamp of the left sample.
 
 
 #### Example
 Suppose we want to get the spreads between buy and sell trades in a trading application
 
 ```
-TS.JOIN trades:buy trades:sell -1hr * ASOF NEAREST 2ms REDUCE sub
+TS.JOIN trades:buy trades:sell -1hr * ASOF NEAREST 2ms ALLOW_EXACT_MATCH REDUCE sub
 ```
 
 The result has all samples from the `buy` series joined with samples from the `sell` series. For each timestamp from the
