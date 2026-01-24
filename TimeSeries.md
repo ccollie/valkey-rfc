@@ -824,6 +824,17 @@ TS.LABELVALUES region FILTER api_latency_p95{service="billing"}
 4) "us-west-2"
 ```
 
+Return the device ids of factory sensors that have not reported temperature metrics in the last 5 minutes:
+
+```
+TS.LABELVALUES device_id FILTER_BY_RANGE NOT -5m * FILTER iot_sensor{type=temperature,location="factory-floor-1"}
+```
+
+```
+1) "device_001",
+2) "device_042",
+3) "device_073"
+```
 ---
 ### TS.STATS
 
