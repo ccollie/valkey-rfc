@@ -958,7 +958,7 @@ there are no matching rows for the sample in the right series.
 </summary>
 
 <summary><code>ASOF</code>
-ASOF joins match each sample in the left series with the closest preceding or following sample in the right series based on
+match each sample in the left series with the closest preceding or following sample in the right series based on
 timestamps. They are particularly useful for analyzing time-series data where records from different sources may not have
 perfectly aligned timestamps. ASOF joins solve the problem of finding the value of a varying property at a specific point in time.
 </summary>
