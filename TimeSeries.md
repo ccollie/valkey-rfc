@@ -928,35 +928,31 @@ Both keys must have been created before `TS.JOIN` is called.
 #### Optional arguments
 
 <summary><code>LEFT</code>
-A `LEFT` join outputs the matching samples between both tables. In case no samples match from the left series, it returns 
+outputs the matching samples between both tables. In case no samples match from the left series, it returns 
 those items with null values.
-
 </summary>
 
 <summary><code>RIGHT</code>
-A `RIGHT` join outputs all samples in the right series. In case no samples match from the left series, it returns
+outputs all samples in the right series. In case no samples match from the left series, it returns
 those items with null values.
 
 </summary>
 
 <summary><code>INNER</code>
-Specifies an `INNER` join. A row is generated for samples with matching timestamps in the selected range.
+a row is generated for samples with matching timestamps in the selected range.
 </summary>
 
 <summary><code>ANTI</code>
-An `ANTI` join returns samples for which no matching timestamp exists in the `right` series.
+returns samples for which no matching timestamp exists in the `right` series.
 </summary>
 
 <summary><code>SEMI</code>
-A `SEMI` join returns samples for which no corresponding timestamp exists in the `right` series. It does not return any 
+returns samples for which no corresponding timestamp exists in the `right` series. It does not return any 
 values from the right table.
-
-The main purpose is to filter the left series based on the existence of related records in the right table, not to
-combine data from both tables.
 </summary>
 
 <summary><code>FULL</code>
-Specifies an FULL join. Returns samples from both left and right series. If no matching rows exist for the row in the left
+returns samples from both left and right series. If no matching rows exist for the row in the left
 series, the value of the right series will have nulls. Correspondingly, the value of the left series will have nulls if
 there are no matching rows for the sample in the right series.
 </summary>
