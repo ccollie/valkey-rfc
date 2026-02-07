@@ -572,8 +572,8 @@ Which timestamp to return for each bucket:
 
 #### Statistical Aggregators
 
-| Aggregator | Description                   | Empty Bucket Value      |
-|------------|-------------------------------|-------------------------|
+| Aggregator | Description                   | Empty Bucket Value     |
+|------------|-------------------------------|------------------------|
 | `std.p`    | Population standard deviation | `NaN`                  |
 | `std.s`    | Sample standard deviation     | `NaN` (if < 2 samples) |
 | `var.p`    | Population variance           | `NaN`                  |
@@ -799,20 +799,25 @@ TS.ADDBULK key data
 
 #### Required arguments
 
-**key**
- key name for the time series.
+<summary><code>key</code>
 
-**data**
+ key name for the time series.
+</summary>
+
+<summary><code>data</code>
  
 JSON payload containing sample data. Must be a single JSON object with `values` and `timestamps` arrays. Up to 1000 samples 
 can be ingested per command.
+</summary>
 
 #### Optional arguments
 
-**RETENTION duration**
- Maximum retention period in milliseconds. Samples older than this are automatically deleted. `0` means infinite retention. Default: module configuration.
+<summary><code>RETENTION duration</code>
 
-**DUPLICATE_POLICY policy**
+ Maximum retention period in milliseconds. Samples older than this are automatically deleted. `0` means infinite retention. Default: module configuration.
+</summary>
+
+<summary><code>DUPLICATE_POLICY policy</code>
 
 Policy for handling duplicate timestamps:
 
@@ -823,29 +828,39 @@ Policy for handling duplicate timestamps:
 - `MAX` - Keep maximum value
 - `SUM` - Sum all values
 
-**ON_DUPLICATE policy_ovr**
+</summary>
+
+<summary><code>ON_DUPLICATE policy_ovr</code>
 
 Override the duplicate policy for this command invocation only. Does not modify the series' configured policy.
 
-**ENCODING COMPRESSED|UNCOMPRESSED**
+</summary>
+
+<summary><code>ENCODING COMPRESSED|UNCOMPRESSED</code>
 
 Storage encoding:
  
 - `COMPRESSED` - Gorilla compression (default)
 - `UNCOMPRESSED` - Raw storage
 
-**CHUNK_SIZE chunkSize**
+</summary>
+
+<summary><code>CHUNK_SIZE chunkSize</code>
 
 Maximum size in bytes for each chunk. Actual memory usage may exceed this slightly. Default: 4096.
 
-**METRIC metric** | **LABELS labelName labelValue ...**
+</summary>
+
+<summary><code>METRIC metric** | **LABELS labelName labelValue ...</code>
 
 Series metadata for filtering and queries:
 
 - `METRIC` - A prometheus style metric specification (e.g. http_errors_total{service="auth",region="us-east"})
 - `LABELS` - Explicit label name-value pairs
 
-**IGNORE ignoreMaxTimediff ignoreMaxValDiff**
+</summary>
+
+<summary><code>IGNORE ignoreMaxTimediff ignoreMaxValDiff</code>
 
 Filtering thresholds for incoming samples:
  
@@ -854,12 +869,16 @@ Filtering thresholds for incoming samples:
 
 Samples exceeding either threshold are dropped.
 
-**SIGNIFICANT_DIGITS significantDigits** | **DECIMAL_DIGITS decimalDigits**
+</summary>
+
+<summary><code>SIGNIFICANT_DIGITS significantDigits** | **DECIMAL_DIGITS decimalDigits</code>
 
  Value precision control (mutually exclusive): 
 
 - `SIGNIFICANT_DIGITS` - Number of significant digits (0-18) 
 - `DECIMAL_DIGITS` - Number of decimal places
+
+</summary>
 
 #### JSON payload format
 
@@ -907,9 +926,9 @@ The `data` argument expects a JSON object with the following structure:
 - **Ingestion count:** Only successfully inserted samples are counted; dropped or blocked samples are excluded from the
   success count
 
-## Examples
+### Examples
 
-### Basic ingestion
+#### Basic ingestion
 
 Ingest two samples into a series:
 
