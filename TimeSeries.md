@@ -71,8 +71,7 @@ We have the following terminologies:
     redis> CONFIG SET ts-compaction-policy avg:2h:10d|^metrics:memory:*;sum:60s:1h:5s|^metrics:cpu:*
     OK
     ```
-
-
+* `Aggregation` - extended set of aggregations like `increase`, `rate`, and `irate`, as well as conditional aggregators like `all`, `any`, `countif`, `share` and `sumif`.
 * `Metadata` - support for returning metadata on time series objects (label names, label values, cardinality, etc)
 * `Rounding` - support for rounding sample values to specified precision. This is enforced for all samples in a time series.
 * `Active Expiration` - support for active pruning of time series data based on retention.
@@ -487,10 +486,210 @@ TS.RANGE key fromTimestamp toTimestamp
     [FILTER_BY_TS ts...] 
     [FILTER_BY_VALUE min max]
     [COUNT count] 
-    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [AGGREGATION aggregator bucketDuration [CONDITION op value] [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
 Query a range of data, optionally with filtering and aggregation.
+
+### Required Arguments
+<details open><summary><code>key</code></summary>
+the time series key to query.
+</details>
+<details open><summary><code>fromTimestamp</code></summary>
+the start of the time range to query, inclusive. Accepts:
+- Numeric timestamp in milliseconds
+- `-` for the earliest timestamp in the series
+- Duration spec (e.g., `2h` for 2 hours ago)
+</details>
+<details open><summary><code>toTimestamp</code></summary>
+the end of the time range to query, inclusive. Accepts:
+  - Numeric timestamp in milliseconds
+  - `+` for the latest timestamp in the series
+  - `*` for the current time
+  - Duration spec (e.g., `30m` for 30 minutes ago)
+</details>
+
+### Optional Arguments
+<details open><summary><code>LATEST</code></summary>
+When querying a compaction, return the latest bucket value even if the bucket is not yet closed. This is in addition to the regular range results. 
+</details>
+<details open><summary><code>FILTER_BY_TS timestamp ...</code></summary>
+Include only samples at the specified timestamp(s). Multiple timestamps can be provided. Applied before aggregation.
+</details>
+<details open><summary><code>FILTER_BY_VALUE min max</code></summary>
+Include only samples with values in `[min, max]`. Both bounds are inclusive. Applied before aggregation.
+</details>
+<details open><summary><code>COUNT count</code></summary>
+Limit output to the first `count` samples or buckets. When used with aggregation, limits bucket
+count (not samples per bucket).
+</details>
+<details open><summary><code>AGGREGATION aggregator bucketDuration [CONDITION op value]</code></summary>
+Aggregate raw samples into fixed-size time buckets. See [Aggregators](#aggregators) for supported aggregation functions.
+`aggregator` is the aggregation function to apply, and `bucketDuration` is the bucket size in milliseconds (must be positive).
+
+Optionally, a `CONDITION` can be provided to apply a comparison filter for conditional aggregators (e.g., `countif`, `sumif`, `share`, `all/any/none`).
+- `op` is a comparison operator: `>`, `<`, `>=`, `<=`, `==`, or `!=`
+- `value` is the value to compare against
+Only samples satisfying the condition are included in the aggregation.
+
+For example, to compute the share of latency samples greater than 10ms in 1-minute buckets over the last hour:
+```valkey-cli
+TS.RANGE request_latency:db -1h * AGGREGATION share 60000 CONDITION > 10
+```
+
+</details>
+<details open><summary><code>ALIGN align</code></summary> 
+Control bucket alignment:
+
+  - `start` — Align buckets to range start
+  - `end` — Align buckets to range end
+  - Numeric timestamp — Align all buckets to a specific timestamp
+</details>
+<details open><summary><code>BUCKETTIMESTAMP bt</code></summary>
+Which timestamp to return for each bucket:
+
+- `start` (default) — Bucket start time
+- `end` — Bucket end time
+- `mid` — Bucket midpoint
+
+</details>
+
+
+### Supported Aggregators
+
+#### Simple Aggregators
+
+| Aggregator | Description                    | Empty Bucket Value |
+|------------|--------------------------------|--------------------|
+| `avg`      | Arithmetic mean                | `NaN`              |
+| `sum`      | Sum of all values              | `0`                |
+| `count`    | Number of samples              | `0`                |
+| `min`      | Minimum value                  | `NaN`              |
+| `max`      | Maximum value                  | `NaN`              |
+| `range`    | Difference between max and min | `NaN`              |
+| `first`    | Earliest sample value          | —                  |
+| `last`     | Latest sample value            | —                  |
+
+#### Statistical Aggregators
+
+| Aggregator | Description                   | Empty Bucket Value      |
+|------------|-------------------------------|-------------------------|
+| `std.p`    | Population standard deviation | `NaN`                  |
+| `std.s`    | Sample standard deviation     | `NaN` (if < 2 samples) |
+| `var.p`    | Population variance           | `NaN`                  |
+| `var.s`    | Sample variance               | `NaN` (if < 2 samples) |
+
+#### Counter/Rate Aggregators
+
+| Aggregator | Description                                      | Notes                                                                 |
+|------------|--------------------------------------------------|-----------------------------------------------------------------------|
+| `increase` | Total increase for monotonic counters            | Handles resets                                                        |
+| `rate`     | Rate of change per second over the bucket window | —                                                                     |
+| `irate`    | Instantaneous rate from the last two samples     | Requires ≥ 2 samples and positive time delta; returns `NaN` otherwise |
+
+#### Filtered Aggregators
+
+> These operate only on samples matching a comparison condition.
+
+| Aggregator | Description                                           | Empty Bucket Value |
+|------------|-------------------------------------------------------|--------------------|
+| `countif`  | Count of samples matching condition                   | `0`                |
+| `sumif`    | Sum of samples matching condition                     | `0`                |
+| `share`    | Fraction of samples matching condition (`[0.0, 1.0]`) | `NaN`              |
+| `all`      | `1.0` if all samples match, `0.0` otherwise           | `NaN`              |
+| `any`      | `1.0` if any sample matches, `0.0` otherwise          | `NaN`              |
+| `none`     | `1.0` if no samples match, `0.0` otherwise            | `NaN`              |
+
+---
+
+## Return Value
+
+**Without aggregation:**  
+Array of `[timestamp, value]` pairs
+
+**With aggregation:**  
+Array of `[bucketTimestamp, aggregatedValue]` pairs
+
+---
+
+### Examples
+
+<details open><summary>Query all samples between Jan 1, 2021 and Jan 2, 2021:</summary>
+
+```
+TS.RANGE temperature 1609459200000 1609545600000
+``` 
+</details>
+
+<details open><summary>
+Get samples where value is between 20 and 30:
+</summary>
+
+```
+TS.RANGE temperature 1609459200000 1609545600000 FILTER_BY_VALUE 20 30
+```
+</details>
+
+<details open><summary>
+Get samples at exact timestamps:
+</summary>
+
+```
+TS.RANGE sensor:001 - + FILTER_BY_TS -2h 1609459260000 1609459320000
+```
+</details>
+
+<details open><summary>
+Compute average per hour:
+</summary>
+
+```
+TS.RANGE requests 1609459200000 1609545600000 AGGREGATION avg 3600000
+```
+
+<details open><summary>
+5-Minute Sums with Empty Buckets
+</summary>
+
+```
+TS.RANGE bytes 1609459200000 1609470000000 
+  ALIGN start 
+  AGGREGATION sum 300000 
+  BUCKETTIMESTAMP mid 
+  EMPTY
+```
+
+</details>
+
+<details open><summary>
+Limited Results
+</summary>
+
+```
+TS.RANGE metrics 1609459200000 1609545600000 
+  AGGREGATION avg 60000 
+  COUNT 100
+```
+</details>
+
+<details open><summary>
+Compute the share of latency samples greater than 10ms in 1-minute buckets over the last hour:
+</summary>
+
+```
+TS.RANGE request_latency:db -1h * AGGREGATION share 60000 CONDITION > 10
+```
+</details>
+
+<details open><summary>
+Returns 1.0 per bucket if only NaN values are received in 1 min buckets over the past hour, otherwise returns 0.0. 
+</summary>
+
+```
+TS.RANGE request_latency:db -1h * AGGREGATION all 60000 CONDITION == NaN
+```
+
+</details>
 
 ---
 ### TS.REVRANGE
@@ -503,10 +702,12 @@ TS.REVRANGE key fromTimestamp toTimestamp
     [FILTER_BY_TS ts...] 
     [FILTER_BY_VALUE min max]
     [COUNT count] 
-    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [AGGREGATION aggregator bucketDuration [CONDITION op value] [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
 Query a range of data in reverse order, optionally with filtering and aggregation.
+
+The syntax and options are the same as `TS.RANGE`, but results are returned in reverse chronological order.
 
 ---
 ### TS.MRANGE
@@ -521,7 +722,7 @@ TS.MRANGE fromTimestamp toTimestamp
     [COUNT count] 
     [REDUCE operator]
     [GROUPBY label REDUCE reducer]
-    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [AGGREGATION aggregator bucketDuration [CONDITION op value] [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
     [WITHLABELS | <SELECTED_LABELS label...>]
 ```
 
@@ -537,7 +738,7 @@ TS.MREVRANGE fromTimestamp toTimestamp
     [COUNT count] 
     [REDUCE operator]
     [GROUPBY label REDUCE reducer]
-    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [AGGREGATION aggregator bucketDuration [CONDITION op value] [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
     [WITHLABELS | <SELECTED_LABELS label...>]
 ```
 
@@ -898,8 +1099,8 @@ TS.JOIN leftKey rightKey fromTimestamp toTimestamp
     [FILTER_BY_TS ts...]
     [FILTER_BY_VALUE min max]
     [COUNT count]
-    [REDUCE operator]
-    [AGGREGATION aggregator bucketDuration [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
+    [REDUCE reducer]
+    [AGGREGATION aggregator bucketDuration [CONDITION op value] [ALIGN align] [BUCKETTIMESTAMP timestamp] [EMPTY]]
 ```
 
 Join two time series on sample timestamps. Performs an INNER join by default.
@@ -998,46 +1199,42 @@ The result has all samples from the `buy` series joined with samples from the `s
 The `sub` transform function is then supplied to subtract the `sell` value from the `buy` value for each sample returned.
 
 The tolerance parameter is particularly useful when working with time series data where exact matches are rare, but you
-want to find the closest match within a reasonable time frame.
-
-It helps prevent incorrect matches that might occur if the nearest available data point is too far away in time or value.
+want to find the closest match within a reasonable time frame. It helps prevent incorrect matches that might occur if the 
+nearest available data point is too far away in time or value.
 
 <code>`count`</code> the maximum number of samples to return.
 
 If used with aggregation, this specifies the number of returned buckets as opposed to the number of samples
 
-**`operator`** 
+**`reducer`** 
 
 performs an operation on the value in each returned row.
 
-`operator` takes one of the following types:
+`reducer` takes one of the following types:
 
-| `operator`   | Description                                                             |
-|--------------|-------------------------------------------------------------------------| 
-| `abs_diff`   | abs(`left` - `right`)                                                   |
-| `and`        | Returns `left` if either value is NAN, `right` otherwise                |
-| `avg`        | Arithmetic mean of both mut values                                      |
-| `default`    | If `left` is is NaN, return `right`, else `left`                        | 
-| `div`        | `left` / `right`                                                        |
-| `eq`         | Returns 1 if `left` == `right`, 0 otherwise                             |
-| `gt`         | Returns 1 if `left` > `right`, otherwise returns 0                      |
-| `gte`        | Returns 1 if left is greater than or equals right, otherwise returns 0  |
-| `if`         | Returns `left` if `right` is not NaN. Otherwise, NaN is returned.       |
-| `ifnot`      | returns `left` if `right` is NaN. Otherwise, NaN is returned.           |
-| `lt`         | Returns 1 if `left` > `right`, otherwise returns 0                      |
-| `lte`        | Returns 1 if `left` is less than or equals `right`, otherwise returns 0 |
-| `min`        | Minimum value                                                           |
-| `max`        | Maximum value                                                           | 
-| `mul`        | `left` * `right`                                                        |
-| `ne`         | Returns 1 if `left` equals `right`, otherwise returns 0                 |
-| `pct_change` | The percentage change of `right` over `left`                            |
-| `pow`        | `left` ^ `right`                                                        |
-| `sgn_diff`   | sgn(`left` - `right`)                                                   |
-| `sub`        | `left` - `right`                                                        |
-| `sum`        | `left` + `right`                                                        |
-| `or`         | return the first non-NaN item. If both are NaN, it returns NaN.         |
-| `unless`     | Returns Null unless `left` equals `right`                               |
-| `xor`        | Returns 1 if `left` != `right`, otherwise returns 0                     |
+| `reducer`    | Description                                                                |
+|--------------|----------------------------------------------------------------------------| 
+| `abs_diff`   | abs(`left` - `right`)                                                      |
+| `avg`        | Arithmetic mean of both values                                             |
+| `cmp`        | -1 if `left` < `right`, 0 if `left` == `right`, and 1 if `left` > `right`. |
+| `div`        | `left` / `right`                                                           |
+| `eq`         | Returns 1 if `left` == `right`, 0 otherwise                                |
+| `gt`         | Returns 1 if `left` > `right`, otherwise returns 0                         |
+| `gte`        | Returns 1 if left is greater than or equals right, otherwise returns 0     |
+| `lt`         | Returns 1 if `left` > `right`, otherwise returns 0                         |
+| `lte`        | Returns 1 if `left` is less than or equals `right`, otherwise returns 0    |
+| `min`        | Minimum value                                                              |
+| `mod`        | `left` % `right`                                                           |
+| `max`        | Maximum value                                                              | 
+| `mul`        | `left` * `right`                                                           |
+| `ne`         | Returns 1 if `left` != `right`, otherwise returns 0                        |
+| `pct_change` | The percentage change of `right` over `left`                               |
+| `pow`        | `left` ^ `right`                                                           |
+| `sgn_diff`   | sgn(`left` - `right`)                                                      |
+| `sub`        | `left` - `right`                                                           |
+| `sum`        | `left` + `right`                                                           |
+| `or`         | Return the first non-NaN item. If both are NaN, it returns NaN.            |
+| `xor`        | Returns the first non NaN if the values differ, and NaN otherwise          |
 
 #### Return value
 
@@ -1074,9 +1271,15 @@ Next, run the join.
   commands like TS.CREATE and TS.ALTER when not specifying variadic arguments like LABELS.
 * We support Prometheus style selectors in TS.QUERYINDEX, TS.MGET, TS.MRANGE, and TS.MREVRANGE.
 * We support new index metadata commands: TS.CARD, TS.LABELNAMES, TS.LABELVALUES, TS.STATS.
-* Additional aggregation functions are supported: 
+* Additional aggregation functions are supported:
+  * `ALL` — Returns 1.0 if every sample in the bucket matches a condition.
+  * `ANY` — Returns 1.0 if any sample in the bucket matches a condition.
+  * `COUNTIF` - counts the number of samples in a bucket that match a condition.
   * `INCREASE` - calculates the total increase in value of a counter over a specified time duration
-  * `RATE` - determines the average per-second growth rate of a counter across a given time frame.
+  * `RATE` - determines the average per-second growth rate of a counter across a given time frame (handling counter-resets)
+  * `IRATE` - calculates the average per-second growth rate of a counter across a given time frame, while handling counter-resets.
+  * `SHARE` — Fraction [0..1) of samples matching a condition.
+  * `SUMIF` - sums the values of samples in a bucket that match a condition.
 * We support a new TS.JOIN command to join two time series on sample timestamps.
 
 ### Unsupported Features
