@@ -871,7 +871,7 @@ Samples exceeding either threshold are dropped.
 
 </summary>
 
-<summary><code>SIGNIFICANT_DIGITS significantDigits** | **DECIMAL_DIGITS decimalDigits</code>
+<summary><code>SIGNIFICANT_DIGITS significantDigits | DECIMAL_DIGITS decimalDigits</code>
 
  Value precision control (mutually exclusive): 
 
@@ -963,13 +963,9 @@ TS.ADDBULK sensor:pressure:tank2 '{"values":[101.3,101.5],"timestamps":[16200000
 
 - If the key does not exist, it will be created with the provided options
 - Input samples are sorted by timestamp before insertion
-- Samples are **not** guaranteed to be inserted in the same order as the input when timestamps differ across chunk
-  boundaries
 - Retention filtering occurs **before** chunk grouping and insertion
 - The ingested count may be less than the payload count if samples are dropped due to retention, duplicates, or filters
 - When the series doesn't exist and no options are provided, module-level defaults apply
-- For bulk ingestion from external sources (e.g., Prometheus, VictoriaMetrics), this command provides an efficient
-  single-call interface
 
 ---
 ### TS.MDEL
