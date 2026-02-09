@@ -851,7 +851,7 @@ Maximum size in bytes for each chunk. Actual memory usage may exceed this slight
 
 </summary>
 
-<summary><code>METRIC metric** | **LABELS labelName labelValue ...</code>
+<summary><code>METRIC metric | LABELS labelName labelValue ...</code>
 
 Series metadata for filtering and queries:
 
@@ -1029,7 +1029,7 @@ matching series or global delete permission.
 - keyword or selectors missing.
 — timestamp parse error.
 
-Per-key delete failures are logged and do not stop processing other keys; overall command returns the count of successful deletions.
+Per-key delete failures are logged and do not stop processing other keys; the overall command returns the count of successful deletions.
 
 #### Behavior notes
 
@@ -1342,9 +1342,9 @@ values from the right table.
 </summary>
 
 <summary><code>FULL</code>
-returns samples from both left and right series. If no matching rows exist for the row in the left
-series, the value of the right series will have nulls. Correspondingly, the value of the left series will have nulls if
-there are no matching rows for the sample in the right series.
+returns samples from both left and right series. If no matching rows exist for the row in the left series, the value of 
+the right series will have nulls. Correspondingly, the value of the left series will have nulls if there are no matching 
+rows for the sample in the right series.
 </summary>
 
 <summary><code>ASOF</code>
