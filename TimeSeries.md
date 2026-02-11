@@ -1406,6 +1406,7 @@ performs an operation on the value in each returned row.
 | `abs_diff`   | abs(`left` - `right`)                                                      |
 | `avg`        | Arithmetic mean of both values                                             |
 | `cmp`        | -1 if `left` < `right`, 0 if `left` == `right`, and 1 if `left` > `right`. |
+| `coalesce`   | Return the first non-NaN item. If both are NaN, it returns NaN.            |
 | `div`        | `left` / `right`                                                           |
 | `eq`         | Returns 1 if `left` == `right`, 0 otherwise                                |
 | `gt`         | Returns 1 if `left` > `right`, otherwise returns 0                         |
@@ -1422,8 +1423,6 @@ performs an operation on the value in each returned row.
 | `sgn_diff`   | sgn(`left` - `right`)                                                      |
 | `sub`        | `left` - `right`                                                           |
 | `sum`        | `left` + `right`                                                           |
-| `or`         | Return the first non-NaN item. If both are NaN, it returns NaN.            |
-| `xor`        | Returns the first non NaN if the values differ, and NaN otherwise          |
 
 #### Return value
 
