@@ -84,7 +84,7 @@ Upon loading, the module registers a new time series module-based data type, cre
 timeseries specific configurations, and the TimeSeries ACL category.
 
 * Module name: ts
-* Data type name: `vktseries`
+* Data type name: `TSDB-TYPE`
 * Module shared object file name: `libvalkey_timeseries.[so|dylib|dll]`
 
 With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeseries in its Module name, which is accessible by clients
