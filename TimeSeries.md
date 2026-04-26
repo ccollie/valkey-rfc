@@ -269,6 +269,22 @@ Limits sample ingest to the timeseries. If a sample arrives less than `dedupeInt
 recent sample it is ignored. Default is `0`
 </summary>
 
+<summary><code>LABELS</code>
+A list of label-value pairs to associate with the time series. For example, `LABELS region us-west service inference` would create a time series with labels `region=us-west` and `service=inference`.
+</summary>
+
+<summary><code>METRIC</code>
+A shorthand for creating series labels using `prometheus` semantics. For example,
+
+```aiignore
+TS.CREATE request_latency:db:sales:usa METRIC "request_latency{region=\"us\",service=\"sales\",type=\"db\"}"
+```
+
+would create a time series with the same labels as the example in LABELS above, but with an additional `__name__=request_latency` label.
+</summary>
+
+Note that the `LABELS` and `METRIC` options are mutually exclusive, and at most one of them can be provided when creating a time series.
+
 ---
 ### TS.CREATERULE
 #### Syntax
@@ -1718,7 +1734,7 @@ Returns anomaly information based on the `OUTPUT` format:
 <details open>
 <summary><b>Detect outliers using Modified Z-score</b></summary>
 
-Detect outliers in temperature sensor data with default threshold:
+Detect outliers in temperature sensor data with the default threshold:
 
 ```valkey-cli
 127.0.0.1:6379> TS.OUTLIERS temperature:sensor1 - + METHOD MODIFIED-ZSCORE
@@ -1848,7 +1864,7 @@ Detect pattern-based anomalies using a sliding window:
     * Periods must be unique positive integers
     * Automatically sorted in ascending order
 * **Score normalization:**
-    * All anomaly scores normalized to [0.0, 1.0] range
+    * All anomaly scores are normalized to [0.0, 1.0] range
     * Higher scores indicate stronger anomalies
 * **Timestamp preservation:**
     * Output timestamps match original series timestamps
