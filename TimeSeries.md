@@ -84,7 +84,7 @@ Upon loading, the module registers a new time series module-based data type, cre
 timeseries specific configurations, and the TimeSeries ACL category.
 
 * Module name: ts
-* Data type name: `vktseries`
+* Data type name: `TSDB-TYPE`
 * Module shared object file name: `libvalkey_timeseries.[so|dylib|dll]`
 
 With the Module name as "ts", ValkeyTimeSeries is compatible with RedisTimeseries in its Module name, which is accessible by clients
@@ -268,6 +268,22 @@ The chunk size for the timeseries, in bytes. Default is `4096`.
 Limits sample ingest to the timeseries. If a sample arrives less than `dedupeInterval` from the most
 recent sample it is ignored. Default is `0`
 </summary>
+
+<summary><code>LABELS</code>
+A list of label-value pairs to associate with the time series. For example, `LABELS region us-west service inference` would create a time series with labels `region=us-west` and `service=inference`.
+</summary>
+
+<summary><code>METRIC</code>
+A shorthand for creating series labels using `prometheus` semantics. For example,
+
+```aiignore
+TS.CREATE request_latency:db:sales:usa METRIC "request_latency{region=\"us\",service=\"sales\",type=\"db\"}"
+```
+
+would create a time series with the same labels as the example in LABELS above, but with an additional `__name__=request_latency` label.
+</summary>
+
+Note that the `LABELS` and `METRIC` options are mutually exclusive, and at most one of them can be provided when creating a time series.
 
 ---
 ### TS.CREATERULE
@@ -1452,6 +1468,411 @@ Next, run the join.
 ```
 127.0.0.1:6379> TS.JOIN temp:CDMX temp:TOR REDUCE min 
 ```
+---
+### TS.OUTLIERS
+
+#### Syntax
+```
+TS.OUTLIERS key fromTimestamp toTimestamp
+  [OUTPUT <FULL | SIMPLE | CLEANED>]
+  [DIRECTION <POSITIVE | NEGATIVE | BOTH>]
+  [SEASONALITY [AUTO | period1 ...]]]
+  METHOD method [method-options]
+```
+
+Detect outliers in a time series using the specified method.
+
+[Examples](#examples)
+
+## Required arguments
+
+<details open>
+<summary><code>key</code></summary>
+
+Key name for the time series.
+</details>
+
+<details open>
+<summary><code>fromTimestamp</code></summary>
+
+The start timestamp for the range query (inclusive).
+
+Use `-` to denote the earliest timestamp in the series.
+</details>
+
+<details open>
+<summary><code>toTimestamp</code></summary>
+
+End timestamp for the range query (inclusive).
+
+Use `+` to denote the latest timestamp in the series.
+</details>
+
+#### Optional arguments
+
+<details open>
+<summary><code>OUTPUT</code></summary>
+
+Controls the output format. One of:
+
+* `SIMPLE` (default) - Returns only the detected outliers
+* `FULL` - Returns all samples with scores, plus anomaly metadata
+* `CLEANED` - Returns normal samples (excluding outliers) and detected anomalies separately
+
+</details>
+
+<details open>
+<summary><code>DIRECTION</code></summary>
+
+Filter anomalies by direction. One of:
+
+* `BOTH` (default) - Detect outliers in both directions
+* `POSITIVE` - Detect only positive outliers (spikes above normal)
+* `NEGATIVE` - Detect only negative outliers (dips below normal)
+
+</details>
+
+<details open>
+<summary><code>SEASONALITY</code></summary>
+
+Adjust for seasonal patterns before outlier detection.
+
+```
+SEASONALITY AUTO | period ...
+```
+
+* For a single period: Uses STL (Seasonal-Trend decomposition using LOESS)
+* For multiple periods: Uses MSTL (Multiple Seasonal-Trend decomposition using LOESS)
+* Periods must be unique positive integers
+* If `AUTO` is specified, the algorithm will attempt to automatically detect the dominant seasonality period(s) in the data using periodograms.
+* Requires at least `2 × max(period)` data points
+
+**Example:** `SEASONALITY 24 168` adjusts for daily (24 hours) and weekly (168 hours) patterns in hourly data.
+</details>
+
+<details open>
+<summary><code>METHOD</code></summary>
+
+Specifies the outlier detection algorithm. **Required**.
+
+#### CUSUM
+
+Cumulative Sum statistical process control method.
+
+```
+METHOD CUSUM
+```
+
+Detects shifts in the mean by accumulating deviations from the target. No additional options.
+
+---
+
+#### EWMA
+
+Exponentially Weighted Moving Average.
+
+```
+METHOD EWMA [ALPHA alpha]
+```
+
+**Options:**
+
+* `ALPHA` - Smoothing factor (0 < alpha ≤ 1). Default: `0.2`. Higher values give more weight to recent observations.
+
+---
+
+#### IQR
+
+Interquartile Range method.
+
+```
+METHOD IQR [THRESHOLD k]
+```
+
+**Options:**
+
+* `THRESHOLD` - IQR multiplier for fence boundaries. Default: `1.5`. Values beyond `Q1 - k×IQR` or `Q3 + k×IQR` are
+  outliers.
+
+---
+
+#### ZSCORE
+
+Standard Z-score method.
+
+```
+METHOD ZSCORE [THRESHOLD threshold]
+```
+
+**Options:**
+
+* `THRESHOLD` - Number of standard deviations from mean. Default: `3.0`. Values beyond `mean ± threshold × σ` are
+  outliers.
+
+---
+
+#### MODIFIED-ZSCORE
+
+Modified Z-score using Median Absolute Deviation (MAD).
+
+```
+METHOD MODIFIED-ZSCORE [THRESHOLD threshold]
+```
+
+**Options:**
+
+* `THRESHOLD` - Modified Z-score threshold. Default: `3.5`. More robust to outliers than standard Z-score.
+
+Uses `0.6745 × (value - median) / MAD` for scoring.
+
+---
+
+#### SMOOTHED-ZSCORE
+
+Smoothed Z-score with adaptive filtering.
+
+```
+METHOD SMOOTHED-ZSCORE [THRESHOLD threshold] [LAG lag] [INFLUENCE influence]
+```
+
+**Options:**
+
+* `THRESHOLD` - Z-score threshold. Default: `3.0`
+* `LAG` - Window size for moving average. Default: `5`
+* `INFLUENCE` - Weight of anomalies in calculations (0-1). Default: `0.5`. Lower values reduce the anomaly's impact on
+  subsequent detection.
+
+---
+
+#### MAD
+
+Median Absolute Deviation.
+
+```
+METHOD MAD [ESTIMATOR estimator] [THRESHOLD k]
+```
+
+**Options:**
+
+* `ESTIMATOR` - MAD calculation method: `SIMPLE`, `HARRELL-DAVIS`, or `QUANTILE`. Default: `SIMPLE`
+* `THRESHOLD` - MAD multiplier. Default: `3.0`
+
+---
+
+#### DOUBLE-MAD
+
+Double MAD for asymmetric distributions.
+
+```
+METHOD DOUBLE-MAD [ESTIMATOR estimator] [THRESHOLD k]
+```
+
+**Options:**
+
+* `ESTIMATOR` - MAD calculation method: `SIMPLE`, `HARRELL-DAVIS`, or `QUANTILE`. Default: `SIMPLE`
+* `THRESHOLD` - MAD multiplier. Default: `3.0`
+
+Separately analyzes values above and below the median for better handling of skewed data.
+
+---
+
+#### RCF
+
+Random Cut Forest algorithm (AWS implementation).
+
+```
+METHOD RCF [NUM_TREES trees] [SAMPLE_SIZE size] [THRESHOLD threshold]
+           [SHINGLE_SIZE shingle] [OUTPUT_AFTER warmup] [DECAY decay]
+```
+
+**Options:**
+
+* `NUM_TREES` - Number of trees in forest. Default: `100`
+* `SAMPLE_SIZE` - Sample size per tree. Default: `256`
+* `THRESHOLD` - Anomaly score threshold. Default: `1.0`
+* `SHINGLE_SIZE` - Sliding window size. Default: `1`. Use values > 1 for contextual anomalies.
+* `OUTPUT_AFTER` - Warmup period (samples). Default: `32`
+* `DECAY` - Time decay factor (0-1). Default: `0.1`. Controls how quickly old data is forgotten.
+
+</details>
+
+## Return value
+
+Returns anomaly information based on the `OUTPUT` format:
+
+#### SIMPLE format
+
+**Array reply:** Each anomaly as `[timestamp, value, signal, score]`
+
+* `timestamp` - Sample timestamp (integer)
+* `value` - Sample value (float)
+* `signal` - Anomaly direction: `1` (positive) or `-1` (negative)
+* `score` - Anomaly score (0.0-1.0, higher = stronger anomaly)
+
+#### FULL format
+
+**Map reply** with keys:
+
+* `method` - Detection method name (string)
+* `threshold` - Threshold value used (float)
+* `samples` - All samples with scores: `[[timestamp, value, score], ...]`
+* `scores` - Array of anomaly scores for all samples
+* `outliers` - Array of detected outliers (same format as SIMPLE)
+* `method_info` - Algorithm-specific metadata (map, if available):
+    * For IQR: `lower_fence`, `upper_fence`
+    * For SPC methods (CUSUM, EWMA): `control_limits`, `center_line`
+
+#### CLEANED format
+
+**Map reply** with keys:
+
+* `samples` - Normal samples (excluding outliers): `[[timestamp, value], ...]`
+* `outliers` - Detected anomalies: `[[timestamp, value, signal, score], ...]`
+
+## Examples
+
+<details open>
+<summary><b>Detect outliers using Modified Z-score</b></summary>
+
+Detect outliers in temperature sensor data with the default threshold:
+
+```valkey-cli
+127.0.0.1:6379> TS.OUTLIERS temperature:sensor1 - + METHOD MODIFIED-ZSCORE
+1) 1) (integer) 1609459200000
+   2) "45.7"
+   3) (integer) 1
+   4) "0.87"
+2) 1) (integer) 1609545600000
+   2) "-5.2"
+   3) (integer) -1
+   4) "0.92"
+```
+
+</details>
+
+<details open>
+<summary><b>Detect with daily seasonality adjustment</b></summary>
+
+Analyze sales data with 24-hour seasonality:
+
+```valkey-cli
+127.0.0.1:6379> TS.OUTLIERS sales:daily 1640000000000 1650000000000 SEASONALITY 24 METHOD ZSCORE THRESHOLD 3.0
+1) 1) (integer) 1641234567000
+   2) "1547.8"
+   3) (integer) 1
+   4) "0.93"
+```
+
+</details>
+
+<details open>
+<summary><b>Detect only positive spikes with full output</b></summary>
+
+Get detailed analysis with metadata for API request spikes:
+
+```valkey-cli
+127.0.0.1:6379> TS.OUTLIERS requests:api - + OUTPUT FULL DIRECTION POSITIVE METHOD IQR THRESHOLD 1.5
+1) "method"
+2) "InterquartileRange"
+3) "threshold"
+4) "1.5"
+5) "samples"
+6) 1) 1) (integer) 1609459200000
+      2) "125.4"
+      3) "0.15"
+   2) 1) (integer) 1609462800000
+      2) "135.2"
+      3) "0.18"
+   ...
+7) "scores"
+8) 1) "0.15"
+   2) "0.18"
+   ...
+9) "outliers"
+10) 1) 1) (integer) 1609462800000
+       2) "850.2"
+       3) (integer) 1
+       4) "0.94"
+11) "method_info"
+12) 1) "lower_fence"
+    2) "-50.3"
+    3) "upper_fence"
+    4) "250.7"
+```
+
+</details>
+
+<details open>
+<summary><b>Multiple seasonality with trend adjustment</b></summary>
+
+Handle both daily and weekly patterns in hourly traffic data:
+
+```valkey-cli
+127.0.0.1:6379> TS.OUTLIERS traffic:hourly - + SEASONALITY 24 168 METHOD MODIFIED-ZSCORE THRESHOLD 3.5
+1) 1) (integer) 1641234567000
+   2) "8547.2"
+   3) (integer) 1
+   4) "0.89"
+```
+
+</details>
+
+<details open>
+<summary><b>Get cleaned data (anomalies removed)</b></summary>
+
+Extract normal operating data and anomalies separately:
+
+```valkey-cli
+127.0.0.1:6379> TS.OUTLIERS cpu:usage - + OUTPUT CLEANED DIRECTION BOTH METHOD EWMA ALPHA 0.3
+1) "samples"
+2) 1) 1) (integer) 1609459200000
+      2) "45.2"
+   2) 1) (integer) 1609462800000
+      2) "47.8"
+   ...
+3) "outliers"
+4) 1) 1) (integer) 1609470000000
+      2) "98.5"
+      3) (integer) 1
+      4) "0.91"
+```
+
+</details>
+
+<details open>
+<summary><b>Random Cut Forest for contextual anomalies</b></summary>
+
+Detect pattern-based anomalies using a sliding window:
+
+```valkey-cli
+127.0.0.1:6379> TS.OUTLIERS metrics:response_time - + METHOD RCF NUM_TREES 150 SHINGLE_SIZE 8 THRESHOLD 1.2
+1) 1) (integer) 1641234567000
+   2) "2547.3"
+   3) (integer) 1
+   4) "0.88"
+```
+
+</details>
+
+## Notes
+
+* **Minimum data requirements:**
+    * At least 3 data points required for analysis
+    * For `SEASONALITY`: requires at least `2 × max(period)` samples
+* **Seasonality constraints:**
+    * Maximum 4 periods allowed
+    * Periods must be unique positive integers
+    * Automatically sorted in ascending order
+* **Score normalization:**
+    * All anomaly scores are normalized to [0.0, 1.0] range
+    * Higher scores indicate stronger anomalies
+* **Timestamp preservation:**
+    * Output timestamps match original series timestamps
+* **Performance tips:**
+    * Use `DIRECTION` to filter results when only interested in one type of anomaly
+    * Single seasonality periods are faster than multiple
+    * RCF is more computationally expensive but better for complex patterns
+
 ---
 ### Differences from RedisTimeSeries
 
