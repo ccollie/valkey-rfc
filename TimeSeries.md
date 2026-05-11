@@ -1877,9 +1877,10 @@ Detect pattern-based anomalies using a sliding window:
 ### Differences from RedisTimeSeries
 
 * Our command parser is more lenient than RedisTimeSeries. For example, the order of optional arguments does not matter for 
-  commands like TS.CREATE and TS.ALTER when not specifying variadic arguments like LABELS.
-* We support Prometheus style selectors in TS.QUERYINDEX, TS.MGET, TS.MRANGE, and TS.MREVRANGE.
-* We support new index metadata commands: TS.CARD, TS.LABELNAMES, TS.LABELVALUES, TS.STATS.
+  commands like `TS.CREATE` and `TS.ALTER` when not specifying variadic arguments like LABELS.
+* `TS.ADDBULK` command for bulk insertion of samples into a time series.
+* We support Prometheus style selectors in `TS.QUERYINDEX`, `TS.MGET`, `TS.MRANGE`, and `TS.MREVRANGE`.
+* We support new index metadata commands: `TS.CARD`, `TS.LABELNAMES`, `TS.LABELVALUES`, `TS.STATS`.
 * Additional aggregation functions are supported:
   * `ALL` — Returns 1.0 if every sample in the bucket matches a condition.
   * `ANY` — Returns 1.0 if any sample in the bucket matches a condition.
@@ -1889,7 +1890,8 @@ Detect pattern-based anomalies using a sliding window:
   * `IRATE` - calculates the average per-second growth rate of a counter across a given time frame, while handling counter-resets.
   * `SHARE` — Fraction [0..1) of samples matching a condition.
   * `SUMIF` - sums the values of samples in a bucket that match a condition.
-* We support a new TS.JOIN command to join two time series on sample timestamps.
+* We support a new `TS.JOIN` command to join two time series on sample timestamps.
+* An outlier detection command, `TS.OUTLIERS`, is supported to identify anomalies in time series data using various methods.
 
 ### Unsupported Features
 
@@ -1898,12 +1900,11 @@ We do not currently support the TWA (Time-Weighted Average) aggregation function
 
 ### Possible Future Enhancements
 
-* Work is in progress to support [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) as a query language, 
-including transform, aggregation, and rollup function support. A stretch goal is to support alerts and notifications based on the query results.
+* Work is in progress to support [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) as a query language. A stretch goal is to support alerts and notifications based on the query results.
 
 * We may support a tiered storage model where data is moved to higher compression chunks (with higher access latency) after a certain period of time. 
 
-* Support more complex analysis, like forecasting and anomaly detection.
+* Support more complex analysis, for example forecasting.
 
 
 ### Configurations
